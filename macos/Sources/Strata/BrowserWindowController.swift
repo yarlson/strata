@@ -19,7 +19,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate {
     let filterBar = FilterBar()
     private let footer = FooterView()
     private let progressDock = ProgressDock()
-    private let modeContainer = ThemedView(fill: \.background)
+    private let modeContainer = PaneView()
     private let splitController = NSSplitViewController()
     private var sidebarItem: NSSplitViewItem!
     private var viewModeControl: NSSegmentedControl?
@@ -39,7 +39,6 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate {
         )
         window.minSize = NSSize(width: 720, height: 420)
         window.titleVisibility = .hidden
-        window.titlebarAppearsTransparent = true
         window.tabbingMode = .preferred
         window.tabbingIdentifier = Self.tabbingIdentifier
         window.isReleasedWhenClosed = false
@@ -51,7 +50,6 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate {
         installMode()
         observe()
         show(location.canonical, selecting: selecting)
-        applyAppearance()
     }
 
     @available(*, unavailable)
@@ -81,7 +79,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate {
         filterBar.isHidden = true
 
         let pane = NSViewController()
-        let paneView = ThemedView(fill: \.background)
+        let paneView = PaneView()
         let stack = NSStackView(views: [filterBar, modeContainer, progressDock, footer])
         stack.orientation = .vertical
         stack.spacing = 0
@@ -102,7 +100,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate {
         pane.view = paneView
         footer.isHidden = !Preferences.shared.showFooter
 
-        sidebarItem = NSSplitViewItem(viewController: sidebar)
+        sidebarItem = NSSplitViewItem(sidebarWithViewController: sidebar)
         sidebarItem.canCollapse = true
         sidebarItem.minimumThickness = 190
         sidebarItem.maximumThickness = 320
@@ -141,10 +139,6 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate {
                 MainActor.assumeIsolated { self?.preferenceDidChange(key) }
             })
         observers.append(
-            center.addObserver(forName: Appearance.didChange, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.applyAppearance() }
-            })
-        observers.append(
             center.addObserver(forName: FileClipboard.didChange, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.updateFooter() }
             })
@@ -166,11 +160,6 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate {
         default:
             break
         }
-    }
-
-    private func applyAppearance() {
-        window?.appearance = Appearance.shared.palette.appearance
-        window?.backgroundColor = Appearance.shared.palette.background
     }
 
     // MARK: Navigation
@@ -483,7 +472,7 @@ extension BrowserWindowController: NSToolbarDelegate {
 
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
         [
-            .toggleSidebar, .sidebarTrackingSeparator, .strataNavigation, .strataLocation, .flexibleSpace,
+            .toggleSidebar, .sidebarTrackingSeparator, .strataNavigation, .strataLocation,
             .strataViewMode, .strataPreview, .strataSearch,
         ]
     }

@@ -11,19 +11,19 @@ import UniformTypeIdentifiers
 final class PreviewController {
     nonisolated static let textReadLimit = 1_048_576
 
-    let view = ThemedView(fill: \.background)
+    let view = PaneView(fill: .controlBackgroundColor)
     var onClose: (() -> Void)? {
         didSet { closeButton.isHidden = onClose == nil }
     }
 
     private let icon = NSImageView()
-    private let title = NSTextField.themedLabel(weight: .semibold)
+    private let title = NSTextField.scaledLabel(weight: .semibold)
     private let openButton = NSButton()
     private let closeButton = NSButton()
     private let metadata = NSStackView()
-    private let content = ThemedView(fill: \.background)
+    private let content = PaneView()
     private let codeView = CodeView()
-    private let message = NSTextField.themedLabel(color: \.dimText)
+    private let message = NSTextField.scaledLabel(color: .secondaryLabelColor)
     private lazy var quickLook: QLPreviewView = {
         let preview = QLPreviewView(frame: .zero, style: .normal)!
         preview.shouldCloseWithWindow = false
@@ -205,10 +205,8 @@ final class PreviewController {
             column.orientation = .vertical
             column.alignment = .leading
             column.spacing = 2
-            let caption = NSTextField.themedLabel(
-                label.uppercased(with: Strings.locale), color: \.dimText, scale: 0.75, weight: .semibold
-            )
-            let text = NSTextField.themedLabel(value, color: \.text, scale: 0.88)
+            let caption = NSTextField.scaledLabel(label, color: .secondaryLabelColor, scale: 0.8)
+            let text = NSTextField.scaledLabel(value, scale: 0.88)
             column.addArrangedSubview(caption)
             column.addArrangedSubview(text)
             metadata.addArrangedSubview(column)
@@ -216,14 +214,14 @@ final class PreviewController {
     }
 
     private func build() {
-        let header = ThemedView(fill: \.background)
-        header.borderEdges = .minY
+        let header = PaneView()
+        header.separatorEdge = .minY
         for button in [openButton, closeButton] {
             button.isBordered = false
             button.bezelStyle = .accessoryBarAction
             button.imagePosition = .imageOnly
             button.target = self
-            button.contentTintColor = Appearance.shared.palette.dimText
+            button.contentTintColor = .secondaryLabelColor
         }
         openButton.image = IconProvider.symbol("arrow.up.forward.app", size: 13)
         openButton.toolTip = tr("Open")
@@ -321,15 +319,13 @@ final class CodeView: NSView {
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
     func showCode(_ text: String, tokens: [Token]) {
-        let palette = Appearance.shared.palette
         let storage = NSMutableAttributedString(
             string: text,
             attributes: [
-                .font: Appearance.shared.font(scale: 0.95), .foregroundColor: palette.text,
+                .font: Appearance.shared.codeFont(scale: 0.95), .foregroundColor: NSColor.labelColor,
             ])
         for token in tokens where NSMaxRange(token.range) <= storage.length {
-            storage.addAttribute(
-                .foregroundColor, value: SyntaxHighlighter.color(token.kind, palette), range: token.range)
+            storage.addAttribute(.foregroundColor, value: SyntaxHighlighter.color(token.kind), range: token.range)
         }
         scrollView.rulersVisible = true
         display(storage)
@@ -343,7 +339,7 @@ final class CodeView: NSView {
     private func display(_ text: NSAttributedString) {
         textView.textStorage?.setAttributedString(text)
         textView.linkTextAttributes = [
-            .foregroundColor: Appearance.shared.palette.accent, .cursor: NSCursor.pointingHand,
+            .foregroundColor: NSColor.linkColor, .cursor: NSCursor.pointingHand,
         ]
         textView.scroll(.zero)
         ruler.needsDisplay = true
@@ -372,11 +368,10 @@ final class LineNumberRuler: NSRulerView {
             let layoutManager = textView.layoutManager,
             let container = textView.textContainer
         else { return }
-        let palette = Appearance.shared.palette
-        palette.background.setFill()
+        NSColor.controlBackgroundColor.setFill()
         bounds.intersection(rect).fill()
         let attributes: [NSAttributedString.Key: Any] = [
-            .font: Appearance.shared.font(scale: 0.82), .foregroundColor: palette.dimText,
+            .font: Appearance.shared.codeFont(scale: 0.82), .foregroundColor: NSColor.tertiaryLabelColor,
         ]
         let text = textView.string as NSString
         let visible = textView.visibleRect

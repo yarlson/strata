@@ -12,9 +12,10 @@
 </div>
 
 Strata combines spatial Miller-column navigation with Icons and List views,
-instant fuzzy search, rich previews, and themes. It is a native AppKit app: it
-uses Quick Look for previews and thumbnails, the system Trash, Finder-compatible
-drag and drop and clipboard, window tabs, and mounted drives.
+instant fuzzy search, and rich previews. It is a native AppKit app that looks
+like the rest of macOS: it follows the system light or dark appearance and
+accent color, and uses Quick Look for previews and thumbnails, the system Trash,
+Finder-compatible drag and drop and clipboard, window tabs, and mounted drives.
 
 ## Contents
 
@@ -22,7 +23,7 @@ drag and drop and clipboard, window tabs, and mounted drives.
 - [Requirements](#requirements)
 - [Build and install](#build-and-install)
 - [Keyboard shortcuts](#keyboard-shortcuts)
-- [Themes and settings](#themes-and-settings)
+- [Settings](#settings)
 - [Permissions](#permissions)
 - [Development](#development)
 - [License](#license)
@@ -106,14 +107,13 @@ lists Strata under **Open With** for folders.
 Letter shortcuts follow the key's Latin label on non-Latin layouts, and digit
 shortcuts follow the key's position on the top row.
 
-## Themes and settings
+## Settings
 
 Open **Strata → Settings…** (⌘,):
 
 - **General:** restore open tabs, default view, hidden files, the shortcut
   footer, the preview pane, filter scope, and language.
-- **Appearance:** 95 themes with dark and light filters, or **macOS (follow
-  system)**; compact or airy density; and text size. Azure Glow is the default.
+- **Appearance:** compact or airy density, and text size.
 - **Search:** folders that global search skips. A folder name matches at any
   depth; an absolute path skips only that folder. Global search always skips
   `~/Library`.
@@ -136,5 +136,4 @@ mise run check                # format lint, tests, and spelling
 
 ## License
 
-Strata is available under the [MIT License](LICENSE). Bundled third-party assets
-are listed in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+Strata is available under the [MIT License](LICENSE).

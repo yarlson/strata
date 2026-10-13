@@ -9,7 +9,7 @@ final class PropertiesWindowController: NSWindowController, NSWindowDelegate {
 
     private let url: URL
     private let cancel = CancelFlag()
-    private let sizeLabel = NSTextField.themedLabel(scale: 0.95)
+    private let sizeLabel = NSTextField.scaledLabel(scale: 0.95)
 
     static func show(for url: URL) {
         let url = url.canonical
@@ -30,7 +30,6 @@ final class PropertiesWindowController: NSWindowController, NSWindowDelegate {
         )
         panel.title = tr("Properties")
         panel.isReleasedWhenClosed = false
-        panel.appearance = Appearance.shared.palette.appearance
         super.init(window: panel)
         panel.delegate = self
         build(panel)
@@ -46,10 +45,10 @@ final class PropertiesWindowController: NSWindowController, NSWindowDelegate {
     }
 
     private func build(_ panel: NSPanel) {
-        let content = ThemedView(fill: \.background)
+        let content = PaneView()
         let entry = try? FileEntry(url: url)
         let icon = NSImageView(image: NSWorkspace.shared.icon(forFile: url.path))
-        let name = NSTextField.themedLabel(
+        let name = NSTextField.scaledLabel(
             url.path == "/" ? DirectoryTableController.displayName(url) : url.lastPathComponent,
             scale: 1.1, weight: .semibold
         )
@@ -65,7 +64,7 @@ final class PropertiesWindowController: NSWindowController, NSWindowDelegate {
         rows.append(contentsOf: volumeRows())
         let grid = NSGridView(
             views: rows.map { label, view in
-                [NSTextField.themedLabel(label, color: \.dimText, scale: 0.9), view]
+                [NSTextField.scaledLabel(label, color: .secondaryLabelColor, scale: 0.9), view]
             })
         grid.column(at: 0).xPlacement = .trailing
         grid.rowSpacing = 8
@@ -94,7 +93,7 @@ final class PropertiesWindowController: NSWindowController, NSWindowDelegate {
     }
 
     private func value(_ text: String, selectable: Bool = false) -> NSTextField {
-        let label = NSTextField.themedLabel(text, scale: 0.95)
+        let label = NSTextField.scaledLabel(text, scale: 0.95)
         label.isSelectable = selectable
         label.lineBreakMode = .byTruncatingMiddle
         label.widthAnchor.constraint(lessThanOrEqualToConstant: 280).isActive = true

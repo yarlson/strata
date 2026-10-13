@@ -3,7 +3,6 @@
   "About Strata": "Strata에 관하여",
   "Add": "추가",
   "Airy": "여유롭게",
-  "All": "모두",
   "An item named “%{name}” already exists in %{folder}. Replacing it will overwrite its contents.": "%{folder}에 “%{name}” 항목이 이미 있습니다. 바꾸면 내용을 덮어씁니다.",
   "Appearance": "모양",
   "Applications": "애플리케이션",
@@ -34,7 +33,6 @@
   "Could not rename %{name}": "%{name}의 이름을 변경할 수 없습니다",
   "Created": "만든 날짜",
   "Cut": "잘라내기",
-  "Dark": "다크",
   "Default view": "기본 보기",
   "Delete Permanently": "영구 삭제",
   "Density": "밀도",
@@ -74,7 +72,6 @@
   "Keep Both": "둘 다 유지",
   "Keyboard shortcuts": "키보드 단축키",
   "Language": "언어",
-  "Light": "라이트",
   "List": "목록",
   "Location": "위치",
   "Minimize": "최소화",
@@ -148,7 +145,6 @@
   "Tabs": "탭",
   "Text size": "텍스트 크기",
   "That location does not exist.": "해당 위치가 없습니다.",
-  "Theme": "테마",
   "These items will be permanently deleted. This action cannot be undone.": "이 항목들은 영구적으로 삭제됩니다. 이 작업은 실행 취소할 수 없습니다.",
   "This folder is empty": "이 폴더는 비어 있습니다",
   "This item will be permanently deleted. This action cannot be undone.": "이 항목은 영구적으로 삭제됩니다. 이 작업은 실행 취소할 수 없습니다.",
@@ -166,6 +162,5 @@
   "Zoom in": "확대",
   "Zoom out": "축소",
   "keys.name.space": "Space",
-  "macOS (follow system)": "macOS(시스템 따르기)",
   "“%{name}” already exists": "“%{name}”이(가) 이미 있습니다"
 }

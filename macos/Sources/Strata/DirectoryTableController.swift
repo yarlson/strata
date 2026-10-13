@@ -26,18 +26,14 @@ final class DirectoryTableController: NSObject, NSTableViewDataSource, NSTableVi
     let model: DirectoryModel
     let style: DirectoryTableStyle
     let table = FileTableView()
-    let view = ThemedView(fill: \.background)
+    let view = PaneView()
     weak var owner: DirectoryTableOwner?
 
     private let scrollView = NSScrollView()
-    private let header = ThemedView(fill: \.background)
-    private let headerTitle = NSTextField.themedLabel(color: \.text, scale: 0.92, weight: .semibold)
-    private let headerRule = ThemedView(fill: \.border)
-    private let emptyLabel = NSTextField.themedLabel(color: \.dimText, scale: 0.92)
+    private let emptyLabel = NSTextField.scaledLabel(color: .secondaryLabelColor, scale: 0.92)
     private var pendingSelection: [URL]?
     private var rename: InlineRename?
     private var observers: [NSObjectProtocol] = []
-    private var isActive = false
 
     private static let nameColumn = NSUserInterfaceItemIdentifier("name")
     private static let sizeColumn = NSUserInterfaceItemIdentifier("size")
@@ -108,12 +104,6 @@ final class DirectoryTableController: NSObject, NSTableViewDataSource, NSTableVi
         }
     }
 
-    /// Marks this table as the destination for paste and new items.
-    func setActive(_ active: Bool) {
-        isActive = active
-        headerRule.fillColor = active ? \.accent : \.border
-    }
-
     func beginRename(_ url: URL, window: NSWindow?) {
         guard let row = model.index(of: url) else {
             pendingRename = url
@@ -155,7 +145,6 @@ final class DirectoryTableController: NSObject, NSTableViewDataSource, NSTableVi
         scrollView.documentView = table
         scrollView.hasVerticalScroller = true
         scrollView.autohidesScrollers = true
-        scrollView.drawsBackground = false
         scrollView.borderType = .noBorder
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         emptyLabel.alignment = .center
@@ -172,43 +161,17 @@ final class DirectoryTableController: NSObject, NSTableViewDataSource, NSTableVi
             column.resizingMask = .autoresizingMask
             table.addTableColumn(column)
             table.columnAutoresizingStyle = .uniformColumnAutoresizingStyle
-            buildColumnHeader()
         case .list:
             buildListColumns()
-            NSLayoutConstraint.activate([scrollView.topAnchor.constraint(equalTo: view.topAnchor)])
         }
         NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             emptyLabel.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -24),
-        ])
-    }
-
-    private func buildColumnHeader() {
-        header.translatesAutoresizingMaskIntoConstraints = false
-        headerTitle.translatesAutoresizingMaskIntoConstraints = false
-        headerRule.translatesAutoresizingMaskIntoConstraints = false
-        headerTitle.lineBreakMode = .byTruncatingMiddle
-        headerTitle.stringValue = Self.displayName(url)
-        header.addSubview(headerTitle)
-        header.addSubview(headerRule)
-        view.addSubview(header)
-        NSLayoutConstraint.activate([
-            header.topAnchor.constraint(equalTo: view.topAnchor),
-            header.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            header.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            header.heightAnchor.constraint(equalToConstant: 30),
-            headerTitle.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 12),
-            headerTitle.trailingAnchor.constraint(lessThanOrEqualTo: header.trailingAnchor, constant: -12),
-            headerTitle.centerYAnchor.constraint(equalTo: header.centerYAnchor),
-            headerRule.leadingAnchor.constraint(equalTo: header.leadingAnchor),
-            headerRule.trailingAnchor.constraint(equalTo: header.trailingAnchor),
-            headerRule.bottomAnchor.constraint(equalTo: header.bottomAnchor),
-            headerRule.heightAnchor.constraint(equalToConstant: 1),
-            scrollView.topAnchor.constraint(equalTo: header.bottomAnchor),
         ])
     }
 
@@ -228,6 +191,8 @@ final class DirectoryTableController: NSObject, NSTableViewDataSource, NSTableVi
             table.addTableColumn(column)
         }
         table.columnAutoresizingStyle = .firstColumnOnlyAutoresizingStyle
+        table.style = .fullWidth
+        table.usesAlternatingRowBackgroundColors = true
         table.headerView = NSTableHeaderView()
         scrollView.hasHorizontalScroller = true
         syncSortIndicator()
@@ -297,10 +262,6 @@ final class DirectoryTableController: NSObject, NSTableViewDataSource, NSTableVi
         model.entries.count
     }
 
-    func tableView(_ tableView: NSTableView, rowViewForRow row: Int) -> NSTableRowView? {
-        FileRowView()
-    }
-
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
         let entry = model.entries[row]
         let identifier = tableColumn?.identifier ?? Self.nameColumn
@@ -321,13 +282,11 @@ final class DirectoryTableController: NSObject, NSTableViewDataSource, NSTableVi
             return cell
         }
         let cell =
-            tableView.makeView(withIdentifier: identifier, owner: nil) as? NSTextField
-            ?? NSTextField(labelWithString: "")
+            tableView.makeView(withIdentifier: identifier, owner: nil) as? TextCellView
+            ?? TextCellView()
         cell.identifier = identifier
-        cell.font = Appearance.shared.font(scale: 0.92)
-        cell.textColor = Appearance.shared.palette.dimText
-        cell.lineBreakMode = .byTruncatingTail
-        cell.stringValue =
+        cell.label.font = Appearance.shared.font(scale: 0.92)
+        cell.label.stringValue =
             switch identifier {
             case Self.sizeColumn: entry.size.map(Formatters.size) ?? "—"
             case Self.kindColumn: entry.kindDescription ?? ""

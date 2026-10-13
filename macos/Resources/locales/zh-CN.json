@@ -3,7 +3,6 @@
   "About Strata": "关于 Strata",
   "Add": "添加",
   "Airy": "宽松",
-  "All": "全部",
   "An item named “%{name}” already exists in %{folder}. Replacing it will overwrite its contents.": "%{folder} 中已存在名为“%{name}”的项目。替换将覆盖其内容。",
   "Appearance": "外观",
   "Applications": "应用",
@@ -34,7 +33,6 @@
   "Could not rename %{name}": "无法重命名 %{name}",
   "Created": "创建时间",
   "Cut": "剪切",
-  "Dark": "深色",
   "Default view": "默认视图",
   "Delete Permanently": "永久删除",
   "Density": "密度",
@@ -74,7 +72,6 @@
   "Keep Both": "保留两者",
   "Keyboard shortcuts": "键盘快捷键",
   "Language": "语言",
-  "Light": "浅色",
   "List": "列表",
   "Location": "位置",
   "Minimize": "最小化",
@@ -148,7 +145,6 @@
   "Tabs": "标签页",
   "Text size": "文字大小",
   "That location does not exist.": "该位置不存在。",
-  "Theme": "主题",
   "These items will be permanently deleted. This action cannot be undone.": "这些项目将被永久删除。此操作无法撤销。",
   "This folder is empty": "此文件夹为空",
   "This item will be permanently deleted. This action cannot be undone.": "此项目将被永久删除。此操作无法撤销。",
@@ -166,6 +162,5 @@
   "Zoom in": "放大",
   "Zoom out": "缩小",
   "keys.name.space": "Space",
-  "macOS (follow system)": "macOS（跟随系统）",
   "“%{name}” already exists": "“%{name}”已存在"
 }

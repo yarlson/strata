@@ -10,14 +10,14 @@ protocol FilterBarDelegate: AnyObject {
 }
 
 @MainActor
-final class FilterBar: ThemedView, NSSearchFieldDelegate {
+final class FilterBar: PaneView, NSSearchFieldDelegate {
     weak var delegate: FilterBarDelegate?
     let field = NSSearchField()
-    private let status = NSTextField.themedLabel(color: \.dimText, scale: 0.85)
+    private let status = NSTextField.scaledLabel(color: .secondaryLabelColor, scale: 0.85)
 
     init() {
-        super.init(fill: \.surface)
-        borderEdges = .minY
+        super.init()
+        separatorEdge = .minY
         field.placeholderString = tr("Filter")
         field.delegate = self
         field.sendsSearchStringImmediately = true
@@ -73,13 +73,13 @@ final class FilterBar: ThemedView, NSSearchFieldDelegate {
 
 /// Shortcut hints, clipboard status, and the item count along the bottom.
 @MainActor
-final class FooterView: ThemedView {
-    private let hints = NSTextField.themedLabel(color: \.dimText, scale: 0.82)
-    private let status = NSTextField.themedLabel(color: \.dimText, scale: 0.82)
+final class FooterView: PaneView {
+    private let hints = NSTextField.scaledLabel(color: .secondaryLabelColor, scale: 0.82)
+    private let status = NSTextField.scaledLabel(color: .secondaryLabelColor, scale: 0.82)
 
     init() {
-        super.init(fill: \.background)
-        borderEdges = .maxY
+        super.init()
+        separatorEdge = .maxY
         hints.lineBreakMode = .byTruncatingTail
         status.alignment = .right
         status.setContentCompressionResistancePriority(.required, for: .horizontal)
@@ -127,13 +127,13 @@ final class FooterView: ThemedView {
                     string: keys,
                     attributes: [
                         .font: appearance.font(scale: 0.82, weight: .semibold),
-                        .foregroundColor: appearance.palette.text,
+                        .foregroundColor: NSColor.labelColor,
                     ]))
             text.append(
                 NSAttributedString(
                     string: "  " + action,
                     attributes: [
-                        .font: appearance.font(scale: 0.82), .foregroundColor: appearance.palette.dimText,
+                        .font: appearance.font(scale: 0.82), .foregroundColor: NSColor.secondaryLabelColor,
                     ]))
         }
         return text
@@ -141,12 +141,12 @@ final class FooterView: ThemedView {
 }
 
 @MainActor
-final class ProgressDock: ThemedView {
+final class ProgressDock: PaneView {
     private let stack = NSStackView()
 
     init() {
-        super.init(fill: \.surface)
-        borderEdges = .maxY
+        super.init()
+        separatorEdge = .maxY
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 6
@@ -170,8 +170,8 @@ final class ProgressDock: ThemedView {
         let operations = FileOperationCenter.shared.operations
         isHidden = operations.isEmpty
         for operation in operations {
-            let title = NSTextField.themedLabel(
-                "\(operation.title)  \(operation.currentName)", color: \.text, scale: 0.85)
+            let title = NSTextField.scaledLabel(
+                "\(operation.title)  \(operation.currentName)", color: .labelColor, scale: 0.85)
             let progress = NSProgressIndicator()
             progress.style = .bar
             progress.isIndeterminate = operation.total <= 1
@@ -205,7 +205,7 @@ final class ClosureButton: NSButton {
         setAccessibilityLabel(label)
         target = self
         action = #selector(run)
-        contentTintColor = Appearance.shared.palette.dimText
+        contentTintColor = NSColor.secondaryLabelColor
     }
 
     @available(*, unavailable)

@@ -147,9 +147,9 @@ mise run build        # when the change touches the bundle, resources, or script
 
 ## UI controls
 
-- Reuse existing views and builders (`ThemedView`, `ThemedLabel`,
-  `FileTableView`, `ClosureButton`, `ClosureMenuItem`) before creating new ones.
-  Prefer native AppKit controls in Settings and dialogs.
+- Reuse existing views and builders (`PaneView`, `ScaledLabel`,
+  `FileTableView`, `TextCellView`, `ClosureButton`, `ClosureMenuItem`) before
+  creating new ones. Prefer native AppKit controls.
 
 ## Tooltips
 
@@ -164,13 +164,18 @@ mise run build        # when the change touches the bundle, resources, or script
 - Prefer self-explanatory names and structure. Do not add comments that narrate obvious code or restate a test's setup, actions, or assertions.
 - Use concise comments for non-obvious intent, invariants, safety requirements, external constraints, workarounds, or surprising behavior.
 
-## Icons and theming
+## Icons and appearance
 
+- Strata looks like a standard macOS app. Do not add color themes, bundled
+  fonts, or custom selection drawing.
 - Use SF Symbols for interface icons (`IconProvider.symbol`) and system file
   icons and Quick Look thumbnails for files (`IconProvider`).
-- Draw every visual state with `Palette` colors from `Appearance.shared`,
-  through `ThemedView`, `ThemedLabel`, or an `Appearance.didChange` observer.
-  Never hardcode colors for themeable views; themes must update live.
+- Use semantic system colors (`labelColor`, `secondaryLabelColor`,
+  `separatorColor`, `controlAccentColor`, `controlBackgroundColor`) so views
+  follow light and dark appearance and the user's accent color. Never hardcode
+  colors. Cells on a selected row switch text to
+  `alternateSelectedControlTextColor` through `backgroundStyle`.
+- Take fonts from `Appearance.shared` so they follow the text size preference.
 - Observe notifications in views with selector-based `addObserver(self, …)`,
   which the system removes automatically, or remove block observers in an
   `isolated deinit`.

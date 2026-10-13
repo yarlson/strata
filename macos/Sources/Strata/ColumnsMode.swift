@@ -36,10 +36,9 @@ final class ColumnsDocumentView: NSView {
     }
 
     override func draw(_ dirtyRect: NSRect) {
-        let palette = Appearance.shared.palette
-        palette.background.setFill()
+        NSColor.controlBackgroundColor.setFill()
         dirtyRect.fill()
-        palette.border.setFill()
+        NSColor.separatorColor.setFill()
         for view in columnViews {
             NSRect(x: view.frame.maxX, y: 0, width: 1, height: bounds.height).fill()
         }
@@ -62,7 +61,7 @@ final class ColumnsMode: NSObject, BrowserMode, DirectoryTableOwner {
     private var previewVisible = true
 
     override init() {
-        let container = ThemedView(fill: \.background)
+        let container = PaneView(fill: .controlBackgroundColor)
         view = container
         super.init()
         scrollView.documentView = document
@@ -89,7 +88,7 @@ final class ColumnsMode: NSObject, BrowserMode, DirectoryTableOwner {
         preview.view.isHidden = true
         updateColumnWidth()
         NotificationCenter.default.addObserver(
-            self, selector: #selector(themeChanged), name: Appearance.didChange, object: nil
+            self, selector: #selector(appearanceChanged), name: Appearance.didChange, object: nil
         )
     }
 
@@ -97,7 +96,7 @@ final class ColumnsMode: NSObject, BrowserMode, DirectoryTableOwner {
         document.needsLayout = true
     }
 
-    @objc private func themeChanged() {
+    @objc private func appearanceChanged() {
         updateColumnWidth()
         document.needsDisplay = true
     }
@@ -201,9 +200,6 @@ final class ColumnsMode: NSObject, BrowserMode, DirectoryTableOwner {
 
     private func setFocused(_ index: Int) {
         focusedIndex = index
-        for (position, column) in columns.enumerated() {
-            column.setActive(position == index)
-        }
     }
 
     /// Opens the selected folder's column after a short pause so key repeat

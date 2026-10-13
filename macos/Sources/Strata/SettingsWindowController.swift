@@ -14,7 +14,7 @@ final class SettingsWindowController: NSWindowController {
         tabs.tabStyle = .toolbar
         let pages: [(NSViewController, String, String)] = [
             (GeneralSettings(), tr("General"), "gearshape"),
-            (AppearanceSettings(), tr("Appearance"), "paintpalette"),
+            (AppearanceSettings(), tr("Appearance"), "textformat.size"),
             (SearchSettings(), tr("Search"), "magnifyingglass"),
         ]
         for (controller, title, symbol) in pages {
@@ -177,40 +177,11 @@ private final class GeneralSettings: NSViewController {
     }
 }
 
-private final class AppearanceSettings: NSViewController, NSTableViewDataSource, NSTableViewDelegate,
-    NSSearchFieldDelegate
-{
-    private let table = NSTableView()
-    private let search = NSSearchField()
-    private var filter = 0
-    private var shown: [(String, String, Theme?)] = []
+private final class AppearanceSettings: NSViewController {
     private let textSizeLabel = NSTextField(labelWithString: "")
 
     override func loadView() {
         let preferences = Preferences.shared
-        search.placeholderString = tr("Search")
-        search.delegate = self
-        let kinds = ActionSegments(labels: [tr("All"), tr("Dark"), tr("Light")], selected: 0) { [weak self] in
-            self?.filter = $0
-            self?.reload()
-        }
-        table.addTableColumn(NSTableColumn(identifier: .init("theme")))
-        table.headerView = nil
-        table.rowHeight = 26
-        table.dataSource = self
-        table.delegate = self
-        table.style = .inset
-        let scroll = NSScrollView()
-        scroll.documentView = table
-        scroll.hasVerticalScroller = true
-        scroll.borderType = .bezelBorder
-        scroll.heightAnchor.constraint(equalToConstant: 220).isActive = true
-        scroll.widthAnchor.constraint(equalToConstant: 380).isActive = true
-        let themeHeader = NSStackView(views: [search, kinds])
-        themeHeader.orientation = .horizontal
-        let themePicker = NSStackView(views: [themeHeader, scroll])
-        themePicker.orientation = .vertical
-        themePicker.alignment = .leading
         let density = ActionSegments(
             labels: [tr("Compact"), tr("Airy")], selected: preferences.density == .compact ? 0 : 1
         ) { Preferences.shared.density = $0 == 0 ? .compact : .airy }
@@ -226,70 +197,14 @@ private final class AppearanceSettings: NSViewController, NSTableViewDataSource,
         size.orientation = .horizontal
         view = pad(
             formGrid([
-                (tr("Theme"), themePicker),
                 (tr("Density"), density),
                 (tr("Text size"), size),
             ]))
-        reload()
     }
 
     @objc private func textSizeChanged(_ sender: NSStepper) {
         Preferences.shared.textSize = CGFloat(sender.doubleValue)
         textSizeLabel.stringValue = "\(Int(Preferences.shared.textSize)) pt"
-    }
-
-    func controlTextDidChange(_ obj: Notification) { reload() }
-
-    private func reload() {
-        let query = search.stringValue.lowercased()
-        let themes = Appearance.shared.themes.filter { theme in
-            (query.isEmpty || theme.name.lowercased().contains(query))
-                && (filter == 0 || (filter == 1) == theme.isDark)
-        }
-        shown =
-            (query.isEmpty && filter == 0 ? [(Preferences.systemThemeID, tr("macOS (follow system)"), nil)] : [])
-            + themes.map { ($0.id, $0.name, $0) }
-        table.reloadData()
-        if let row = shown.firstIndex(where: { $0.0 == Preferences.shared.themeID }) {
-            table.selectRowIndexes([row], byExtendingSelection: false)
-            table.scrollRowToVisible(row)
-        }
-    }
-
-    func numberOfRows(in tableView: NSTableView) -> Int { shown.count }
-
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
-        let (_, name, theme) = shown[row]
-        let swatch = NSStackView()
-        swatch.spacing = 0
-        let colors =
-            theme.map { t in
-                [t.background, t.surface, t.accent, t.text].map {
-                    NSColor(srgbRed: $0.red, green: $0.green, blue: $0.blue, alpha: 1)
-                }
-            }
-            ?? [.windowBackgroundColor, .controlBackgroundColor, .controlAccentColor, .labelColor]
-        for color in colors {
-            let chip = NSView()
-            chip.wantsLayer = true
-            chip.layer?.backgroundColor = color.cgColor
-            chip.widthAnchor.constraint(equalToConstant: 12).isActive = true
-            chip.heightAnchor.constraint(equalToConstant: 14).isActive = true
-            swatch.addArrangedSubview(chip)
-        }
-        swatch.wantsLayer = true
-        swatch.layer?.cornerRadius = 3
-        swatch.layer?.masksToBounds = true
-        let label = NSTextField(labelWithString: name)
-        let stack = NSStackView(views: [swatch, label])
-        stack.spacing = 10
-        return stack
-    }
-
-    func tableViewSelectionDidChange(_ notification: Notification) {
-        guard shown.indices.contains(table.selectedRow) else { return }
-        let id = shown[table.selectedRow].0
-        if id != Preferences.shared.themeID { Preferences.shared.themeID = id }
     }
 }
 

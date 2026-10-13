@@ -107,8 +107,6 @@ final class PreviewSplit: NSSplitView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
-    override var dividerColor: NSColor { Appearance.shared.palette.border }
-
     func setPreviewVisible(_ visible: Bool) {
         let wasHidden = preview.view.isHidden
         preview.view.isHidden = !visible

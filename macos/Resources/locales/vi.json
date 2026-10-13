@@ -3,7 +3,6 @@
   "About Strata": "Giới thiệu về Strata",
   "Add": "Thêm",
   "Airy": "Thoáng",
-  "All": "Tất cả",
   "An item named “%{name}” already exists in %{folder}. Replacing it will overwrite its contents.": "Một mục tên “%{name}” đã tồn tại trong %{folder}. Thay thế sẽ ghi đè nội dung của mục đó.",
   "Appearance": "Giao diện",
   "Applications": "Ứng dụng",
@@ -34,7 +33,6 @@
   "Could not rename %{name}": "Không thể đổi tên %{name}",
   "Created": "Ngày tạo",
   "Cut": "Cắt",
-  "Dark": "Tối",
   "Default view": "Chế độ xem mặc định",
   "Delete Permanently": "Xóa vĩnh viễn",
   "Density": "Mật độ",
@@ -74,7 +72,6 @@
   "Keep Both": "Giữ cả hai",
   "Keyboard shortcuts": "Phím tắt",
   "Language": "Ngôn ngữ",
-  "Light": "Sáng",
   "List": "Danh sách",
   "Location": "Vị trí",
   "Minimize": "Thu nhỏ",
@@ -148,7 +145,6 @@
   "Tabs": "Thẻ",
   "Text size": "Cỡ chữ",
   "That location does not exist.": "Vị trí đó không tồn tại.",
-  "Theme": "Chủ đề",
   "These items will be permanently deleted. This action cannot be undone.": "Các mục này sẽ bị xóa vĩnh viễn. Không thể hoàn tác thao tác này.",
   "This folder is empty": "Thư mục này trống",
   "This item will be permanently deleted. This action cannot be undone.": "Mục này sẽ bị xóa vĩnh viễn. Không thể hoàn tác thao tác này.",
@@ -166,6 +162,5 @@
   "Zoom in": "Phóng to",
   "Zoom out": "Thu nhỏ",
   "keys.name.space": "Space",
-  "macOS (follow system)": "macOS (theo hệ thống)",
   "“%{name}” already exists": "“%{name}” đã tồn tại"
 }

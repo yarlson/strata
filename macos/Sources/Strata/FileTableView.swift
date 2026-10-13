@@ -11,8 +11,7 @@ protocol FileTableViewDelegate: AnyObject {
     func fileTableActivate(_ table: FileTableView)
 }
 
-/// A table that routes Strata shortcuts before NSTableView's defaults and
-/// draws theme selection colors.
+/// A table that routes Strata shortcuts before NSTableView's defaults.
 final class FileTableView: NSTableView {
     weak var fileDelegate: FileTableViewDelegate?
 
@@ -22,11 +21,7 @@ final class FileTableView: NSTableView {
         allowsMultipleSelection = true
         allowsEmptySelection = true
         focusRingType = .none
-        intercellSpacing = NSSize(width: 0, height: 0)
-        gridStyleMask = []
-        backgroundColor = .clear
-        style = .plain
-        selectionHighlightStyle = .regular
+        style = .inset
         doubleAction = #selector(activate)
         target = self
         registerForDraggedTypes([.fileURL])
@@ -50,14 +45,7 @@ final class FileTableView: NSTableView {
     override func becomeFirstResponder() -> Bool {
         let accepted = super.becomeFirstResponder()
         if accepted { fileDelegate?.fileTableDidBecomeFirstResponder(self) }
-        redrawSelection()
         return accepted
-    }
-
-    override func resignFirstResponder() -> Bool {
-        let resigned = super.resignFirstResponder()
-        redrawSelection()
-        return resigned
     }
 
     override func menu(for event: NSEvent) -> NSMenu? {
@@ -80,14 +68,7 @@ final class FileTableView: NSTableView {
         super.mouseDown(with: event)
     }
 
-    /// Keyboard focus in an active window, which selection drawing emphasizes.
-    var isFocused: Bool { isFirstResponder && window?.isKeyWindow == true }
-
     var isFirstResponder: Bool { window?.firstResponder === self }
-
-    func redrawSelection() {
-        enumerateAvailableRowViews { rowView, _ in rowView.needsDisplay = true }
-    }
 
     /// Moves the cursor and selection to `row`, extending from the anchor when asked.
     func moveCursor(to row: Int, extend: Bool = false) {
@@ -112,22 +93,31 @@ final class FileTableView: NSTableView {
     }
 }
 
-final class FileRowView: NSTableRowView {
-    override func drawSelection(in dirtyRect: NSRect) {
-        let palette = Appearance.shared.palette
-        let table = superview as? FileTableView
-        let color = table?.isFocused == true ? palette.selection : palette.highlight
-        color.setFill()
-        NSBezierPath(roundedRect: bounds.insetBy(dx: 4, dy: 1), xRadius: 4, yRadius: 4).fill()
+/// A table cell with one text field whose color follows the row's selection.
+final class TextCellView: NSTableCellView {
+    let label = NSTextField(labelWithString: "")
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        textField = label
+        label.textColor = .secondaryLabelColor
+        label.lineBreakMode = .byTruncatingTail
+        label.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(label)
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 2),
+            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -2),
+            label.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
     }
 
-    override var interiorBackgroundStyle: NSView.BackgroundStyle { .normal }
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
-    override func drawDraggingDestinationFeedback(in dirtyRect: NSRect) {
-        let path = NSBezierPath(roundedRect: bounds.insetBy(dx: 4, dy: 1), xRadius: 4, yRadius: 4)
-        Appearance.shared.palette.accent.setStroke()
-        path.lineWidth = 1.5
-        path.stroke()
+    override var backgroundStyle: NSView.BackgroundStyle {
+        didSet {
+            label.textColor = backgroundStyle == .emphasized ? .alternateSelectedControlTextColor : .secondaryLabelColor
+        }
     }
 }
 
@@ -175,18 +165,30 @@ final class FileCellView: NSTableCellView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
+    private var isDimmed = false
+
     func configure(_ entry: FileEntry, detail: String?, showsChevron: Bool) {
         let appearance = Appearance.shared
-        let palette = appearance.palette
         icon.image = IconProvider.shared.icon(for: entry)
         nameField.stringValue = entry.name
         nameField.font = appearance.font()
-        nameField.textColor = entry.isHidden ? palette.dimText : palette.text
         detailField.stringValue = detail ?? ""
         detailField.font = appearance.font(scale: 0.85)
-        detailField.textColor = palette.dimText
         chevron.isHidden = !(showsChevron && entry.isFolder)
-        chevron.contentTintColor = palette.dimText
+        isDimmed = entry.isHidden
+        updateColors()
+    }
+
+    override var backgroundStyle: NSView.BackgroundStyle {
+        didSet { updateColors() }
+    }
+
+    /// Hidden items are dimmed; a selected row in a focused table uses the selection text color.
+    private func updateColors() {
+        let selected: NSColor? = backgroundStyle == .emphasized ? .alternateSelectedControlTextColor : nil
+        nameField.textColor = selected ?? (isDimmed ? .secondaryLabelColor : .labelColor)
+        detailField.textColor = selected ?? .secondaryLabelColor
+        chevron.contentTintColor = selected ?? .secondaryLabelColor
     }
 }
 
@@ -212,7 +214,8 @@ final class InlineRename: NSObject, NSTextFieldDelegate {
         field.isEditable = true
         field.isSelectable = true
         field.drawsBackground = true
-        field.backgroundColor = Appearance.shared.palette.surface
+        field.backgroundColor = .textBackgroundColor
+        field.textColor = .labelColor
         field.isBezeled = false
         field.focusRingType = .exterior
         field.delegate = self

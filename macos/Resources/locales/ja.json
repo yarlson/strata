@@ -3,7 +3,6 @@
   "About Strata": "Strata について",
   "Add": "追加",
   "Airy": "ゆったり",
-  "All": "すべて",
   "An item named “%{name}” already exists in %{folder}. Replacing it will overwrite its contents.": "%{folder}には「%{name}」という項目がすでにあります。置き換えると内容が上書きされます。",
   "Appearance": "外観",
   "Applications": "アプリケーション",
@@ -34,7 +33,6 @@
   "Could not rename %{name}": "%{name} の名前を変更できませんでした",
   "Created": "作成日時",
   "Cut": "切り取り",
-  "Dark": "ダーク",
   "Default view": "デフォルトの表示",
   "Delete Permanently": "完全に削除",
   "Density": "密度",
@@ -74,7 +72,6 @@
   "Keep Both": "両方を保持",
   "Keyboard shortcuts": "キーボードショートカット",
   "Language": "言語",
-  "Light": "ライト",
   "List": "リスト",
   "Location": "場所",
   "Minimize": "最小化",
@@ -148,7 +145,6 @@
   "Tabs": "タブ",
   "Text size": "文字サイズ",
   "That location does not exist.": "その場所は存在しません。",
-  "Theme": "テーマ",
   "These items will be permanently deleted. This action cannot be undone.": "これらの項目は完全に削除されます。この操作は元に戻せません。",
   "This folder is empty": "このフォルダーは空です",
   "This item will be permanently deleted. This action cannot be undone.": "この項目は完全に削除されます。この操作は元に戻せません。",
@@ -166,6 +162,5 @@
   "Zoom in": "拡大",
   "Zoom out": "縮小",
   "keys.name.space": "Space",
-  "macOS (follow system)": "macOS（システムに合わせる）",
   "“%{name}” already exists": "「%{name}」はすでに存在します"
 }

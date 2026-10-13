@@ -3,7 +3,6 @@
   "About Strata": "About Strata",
   "Add": "Add",
   "Airy": "Airy",
-  "All": "All",
   "An item named “%{name}” already exists in %{folder}. Replacing it will overwrite its contents.": "An item named “%{name}” already exists in %{folder}. Replacing it will overwrite its contents.",
   "Appearance": "Appearance",
   "Applications": "Applications",
@@ -34,7 +33,6 @@
   "Could not rename %{name}": "Could not rename %{name}",
   "Created": "Created",
   "Cut": "Cut",
-  "Dark": "Dark",
   "Default view": "Default view",
   "Delete Permanently": "Delete Permanently",
   "Density": "Density",
@@ -74,7 +72,6 @@
   "Keep Both": "Keep Both",
   "Keyboard shortcuts": "Keyboard shortcuts",
   "Language": "Language",
-  "Light": "Light",
   "List": "List",
   "Location": "Location",
   "Minimize": "Minimize",
@@ -148,7 +145,6 @@
   "Tabs": "Tabs",
   "Text size": "Text size",
   "That location does not exist.": "That location does not exist.",
-  "Theme": "Theme",
   "These items will be permanently deleted. This action cannot be undone.": "These items will be permanently deleted. This action cannot be undone.",
   "This folder is empty": "This folder is empty",
   "This item will be permanently deleted. This action cannot be undone.": "This item will be permanently deleted. This action cannot be undone.",
@@ -166,6 +162,5 @@
   "Zoom in": "Zoom in",
   "Zoom out": "Zoom out",
   "keys.name.space": "Space",
-  "macOS (follow system)": "macOS (follow system)",
   "“%{name}” already exists": "“%{name}” already exists"
 }

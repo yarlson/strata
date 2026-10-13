@@ -8,21 +8,25 @@ protocol LocationBarDelegate: AnyObject {
     func locationBarDidEndEditing(_ bar: LocationBar)
 }
 
-/// Clickable breadcrumbs that turn into a path field for typed locations.
+/// A path control that turns into a text field for typed locations.
 @MainActor
 final class LocationBar: NSView, NSTextFieldDelegate {
     weak var delegate: LocationBarDelegate?
 
-    private let crumbs = NSStackView()
+    private let path = NSPathControl()
     private let field = NSTextField()
     private var location = FileManager.default.homeDirectoryForCurrentUser
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
-        crumbs.orientation = .horizontal
-        crumbs.spacing = 2
-        crumbs.alignment = .centerY
-        crumbs.setHuggingPriority(.defaultLow, for: .horizontal)
+        path.pathStyle = .standard
+        path.isEditable = false
+        path.focusRingType = .none
+        path.target = self
+        path.action = #selector(pathClicked)
+        path.doubleAction = #selector(beginEditing)
+        // Below the fitting-size priority, so toolbar layout truncates the path instead of overflowing buttons.
+        path.setContentCompressionResistancePriority(.init(40), for: .horizontal)
         field.isHidden = true
         field.delegate = self
         field.focusRingType = .none
@@ -30,14 +34,14 @@ final class LocationBar: NSView, NSTextFieldDelegate {
         field.usesSingleLineMode = true
         field.cell?.isScrollable = true
         field.placeholderString = tr("Location")
-        for child in [crumbs, field] {
+        for child in [path, field] {
             child.translatesAutoresizingMaskIntoConstraints = false
             addSubview(child)
         }
         NSLayoutConstraint.activate([
-            crumbs.leadingAnchor.constraint(equalTo: leadingAnchor),
-            crumbs.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor),
-            crumbs.centerYAnchor.constraint(equalTo: centerYAnchor),
+            path.leadingAnchor.constraint(equalTo: leadingAnchor),
+            path.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor),
+            path.centerYAnchor.constraint(equalTo: centerYAnchor),
             field.leadingAnchor.constraint(equalTo: leadingAnchor),
             field.trailingAnchor.constraint(equalTo: trailingAnchor),
             field.centerYAnchor.constraint(equalTo: centerYAnchor),
@@ -45,28 +49,30 @@ final class LocationBar: NSView, NSTextFieldDelegate {
         ])
         setContentHuggingPriority(.defaultLow, for: .horizontal)
         setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        widthAnchor.constraint(greaterThanOrEqualToConstant: 160).isActive = true
-        NotificationCenter.default.addObserver(
-            self, selector: #selector(rebuildCrumbs), name: Appearance.didChange, object: nil
-        )
+        widthAnchor.constraint(greaterThanOrEqualToConstant: 200).isActive = true
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
-    override var intrinsicContentSize: NSSize { NSSize(width: 480, height: 28) }
+    /// No preferred width: the toolbar gives the location bar the space left after the buttons.
+    override var intrinsicContentSize: NSSize { NSSize(width: NSView.noIntrinsicMetric, height: 28) }
 
     var isEditing: Bool { !field.isHidden }
 
     func show(_ url: URL) {
         location = url.canonical
-        rebuildCrumbs()
+        path.url = location
     }
 
-    func beginEditing() {
+    @objc private func pathClicked() {
+        guard let url = path.clickedPathItem?.url, url != location else { return }
+        delegate?.locationBar(self, navigateTo: url)
+    }
+
+    @objc func beginEditing() {
         field.stringValue = Self.displayPath(location) + (location.path == "/" ? "" : "/")
-        field.font = Appearance.shared.font()
-        crumbs.isHidden = true
+        path.isHidden = true
         field.isHidden = false
         window?.makeFirstResponder(field)
         field.currentEditor()?.moveToEndOfDocument(nil)
@@ -75,7 +81,7 @@ final class LocationBar: NSView, NSTextFieldDelegate {
     private func endEditing() {
         guard isEditing else { return }
         field.isHidden = true
-        crumbs.isHidden = false
+        path.isHidden = false
         delegate?.locationBarDidEndEditing(self)
     }
 
@@ -150,77 +156,4 @@ final class LocationBar: NSView, NSTextFieldDelegate {
         if path.hasPrefix(home + "/") { return "~" + path.dropFirst(home.count) }
         return path
     }
-
-    @objc private func rebuildCrumbs() {
-        crumbs.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        let appearance = Appearance.shared
-        let home = FileManager.default.homeDirectoryForCurrentUser.canonical
-        var trail: [(String, URL)] = []
-        var current = location
-        while true {
-            if current == home {
-                trail.append(("~", current))
-                break
-            }
-            if current.path == "/" {
-                trail.append(("/", current))
-                break
-            }
-            trail.append((current.lastPathComponent, current))
-            current = current.deletingLastPathComponent().canonical
-        }
-        for (index, (title, url)) in trail.reversed().enumerated() {
-            if index > 0, title != "/" {
-                let separator = NSTextField(labelWithString: "/")
-                separator.font = appearance.font(scale: 0.95)
-                separator.textColor = appearance.palette.dimText
-                crumbs.addArrangedSubview(separator)
-            }
-            let button = CrumbButton(title: title, url: url) { [weak self] url in
-                guard let self else { return }
-                self.delegate?.locationBar(self, navigateTo: url)
-            }
-            button.isCurrent = index == trail.count - 1
-            crumbs.addArrangedSubview(button)
-        }
-    }
-
-    override func mouseDown(with event: NSEvent) {
-        if event.clickCount == 2 { beginEditing() } else { super.mouseDown(with: event) }
-    }
-}
-
-private final class CrumbButton: NSButton {
-    private let url: URL
-    private let handler: (URL) -> Void
-    var isCurrent = false { didSet { restyle() } }
-
-    init(title: String, url: URL, handler: @escaping (URL) -> Void) {
-        self.url = url
-        self.handler = handler
-        super.init(frame: .zero)
-        self.title = title
-        isBordered = false
-        setButtonType(.momentaryChange)
-        target = self
-        action = #selector(clicked)
-        lineBreakMode = .byTruncatingMiddle
-        setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        restyle()
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
-
-    private func restyle() {
-        let appearance = Appearance.shared
-        attributedTitle = NSAttributedString(
-            string: title,
-            attributes: [
-                .font: appearance.font(scale: 0.95, weight: isCurrent ? .semibold : .regular),
-                .foregroundColor: isCurrent ? appearance.palette.text : appearance.palette.dimText,
-            ])
-    }
-
-    @objc private func clicked() { handler(url) }
 }

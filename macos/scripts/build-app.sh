@@ -41,9 +41,8 @@ mkdir -p "$contents/MacOS" "$resources"
 
 cp "$bin_dir/Strata" "$contents/MacOS/Strata"
 cp "$package/Info.plist" "$contents/Info.plist"
-cp -R "$package/Resources/locales" "$package/Resources/themes" "$package/Resources/fonts" \
-  "$package/Resources/licenses" "$resources/"
-cp "$repo/LICENSE" "$repo/THIRD_PARTY_LICENSES.md" "$resources/licenses/"
+cp -R "$package/Resources/locales" "$resources/"
+cp "$repo/LICENSE" "$resources/LICENSE"
 
 swift "$package/scripts/render-icon.swift" "$package/Resources/AppIcon.svg" "$scratch/AppIcon.iconset"
 iconutil -c icns -o "$resources/AppIcon.icns" "$scratch/AppIcon.iconset"

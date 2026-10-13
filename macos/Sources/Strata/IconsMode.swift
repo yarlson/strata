@@ -41,15 +41,28 @@ final class IconCollectionView: NSCollectionView {
     }
 }
 
+/// Draws Finder's selection: a gray tile behind the icon and a capsule behind the name.
 final class IconItemView: NSView {
     var isSelected = false { didSet { needsDisplay = true } }
     var isFocused = false { didSet { needsDisplay = true } }
+    weak var icon: NSView?
+    weak var label: NSTextField?
 
     override func draw(_ dirtyRect: NSRect) {
-        guard isSelected else { return }
-        let palette = Appearance.shared.palette
-        (isFocused ? palette.selection : palette.highlight).setFill()
-        NSBezierPath(roundedRect: bounds.insetBy(dx: 2, dy: 2), xRadius: 6, yRadius: 6).fill()
+        guard isSelected, let icon, let label else { return }
+        NSColor.quaternaryLabelColor.setFill()
+        NSBezierPath(roundedRect: icon.frame.insetBy(dx: -4, dy: -4), xRadius: 6, yRadius: 6).fill()
+        let text = label.attributedStringValue.boundingRect(
+            with: NSSize(width: label.bounds.width, height: .greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading]
+        )
+        let width = min(ceil(text.width) + 10, label.frame.width)
+        let capsule = NSRect(
+            x: label.frame.midX - width / 2, y: label.frame.maxY - ceil(text.height) - 1,
+            width: width, height: ceil(text.height) + 2
+        )
+        (isFocused ? NSColor.selectedContentBackgroundColor : .unemphasizedSelectedContentBackgroundColor).setFill()
+        NSBezierPath(roundedRect: capsule, xRadius: 4, yRadius: 4).fill()
     }
 }
 
@@ -80,17 +93,31 @@ final class IconItem: NSCollectionViewItem {
             label.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 4),
             label.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -4),
         ])
+        container.icon = icon
+        container.label = label
         view = container
         imageView = icon
         textField = label
     }
 
+    private var isHiddenItem = false
+    private var isFocused = false
+
     override var isSelected: Bool {
-        didSet { (view as? IconItemView)?.isSelected = isSelected }
+        didSet { updateSelection() }
     }
 
     func setFocused(_ focused: Bool) {
-        (view as? IconItemView)?.isFocused = focused
+        isFocused = focused
+        updateSelection()
+    }
+
+    private func updateSelection() {
+        (view as? IconItemView)?.isSelected = isSelected
+        (view as? IconItemView)?.isFocused = isFocused
+        label.textColor =
+            isSelected && isFocused
+            ? .alternateSelectedControlTextColor : (isHiddenItem ? .secondaryLabelColor : .labelColor)
     }
 
     func configure(_ entry: FileEntry, size: CGFloat) {
@@ -98,7 +125,8 @@ final class IconItem: NSCollectionViewItem {
         let appearance = Appearance.shared
         label.stringValue = entry.name
         label.font = appearance.font(scale: 0.9)
-        label.textColor = entry.isHidden ? appearance.palette.dimText : appearance.palette.text
+        isHiddenItem = entry.isHidden
+        updateSelection()
         icon.image = IconProvider.shared.cachedThumbnail(for: entry, size: size) ?? IconProvider.shared.icon(for: entry)
         guard !entry.isFolder, !entry.isPackage else { return }
         IconProvider.shared.thumbnail(for: entry, size: size) { [weak self] image in
@@ -117,7 +145,7 @@ final class IconsMode: NSObject, BrowserMode, NSCollectionViewDataSource, NSColl
 
     private let collection = IconCollectionView()
     private let scrollView = NSScrollView()
-    private let emptyLabel = NSTextField.themedLabel(color: \.dimText, scale: 0.92)
+    private let emptyLabel = NSTextField.scaledLabel(color: .secondaryLabelColor, scale: 0.92)
     private let split: PreviewSplit
     private var model: DirectoryModel?
     private var memory = SelectionMemory()
@@ -125,7 +153,7 @@ final class IconsMode: NSObject, BrowserMode, NSCollectionViewDataSource, NSColl
     private var rename: InlineRename?
 
     override init() {
-        let container = ThemedView(fill: \.background)
+        let container = PaneView(fill: .controlBackgroundColor)
         split = PreviewSplit(content: container)
         view = split
         super.init()
@@ -163,11 +191,11 @@ final class IconsMode: NSObject, BrowserMode, NSCollectionViewDataSource, NSColl
         emptyLabel.maximumNumberOfLines = 4
         emptyLabel.lineBreakMode = .byWordWrapping
         NotificationCenter.default.addObserver(
-            self, selector: #selector(themeChanged), name: Appearance.didChange, object: nil
+            self, selector: #selector(appearanceChanged), name: Appearance.didChange, object: nil
         )
     }
 
-    @objc private func themeChanged() {
+    @objc private func appearanceChanged() {
         collection.collectionViewLayout = makeLayout()
         collection.reloadData()
     }

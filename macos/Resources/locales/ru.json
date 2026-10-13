@@ -3,7 +3,6 @@
   "About Strata": "О программе Strata",
   "Add": "Добавить",
   "Airy": "Просторная",
-  "All": "Все",
   "An item named “%{name}” already exists in %{folder}. Replacing it will overwrite its contents.": "Элемент «%{name}» уже существует в %{folder}. При замене его содержимое будет перезаписано.",
   "Appearance": "Оформление",
   "Applications": "Приложения",
@@ -34,7 +33,6 @@
   "Could not rename %{name}": "Не удалось переименовать %{name}",
   "Created": "Создан",
   "Cut": "Вырезать",
-  "Dark": "Тёмная",
   "Default view": "Вид по умолчанию",
   "Delete Permanently": "Удалить безвозвратно",
   "Density": "Плотность",
@@ -74,7 +72,6 @@
   "Keep Both": "Сохранить оба",
   "Keyboard shortcuts": "Комбинации клавиш",
   "Language": "Язык",
-  "Light": "Светлая",
   "List": "Список",
   "Location": "Расположение",
   "Minimize": "Свернуть",
@@ -148,7 +145,6 @@
   "Tabs": "Вкладки",
   "Text size": "Размер текста",
   "That location does not exist.": "Это расположение не существует.",
-  "Theme": "Тема",
   "These items will be permanently deleted. This action cannot be undone.": "Эти элементы будут удалены безвозвратно. Это действие нельзя отменить.",
   "This folder is empty": "Эта папка пуста",
   "This item will be permanently deleted. This action cannot be undone.": "Этот элемент будет удалён безвозвратно. Это действие нельзя отменить.",
@@ -166,6 +162,5 @@
   "Zoom in": "Увеличить",
   "Zoom out": "Уменьшить",
   "keys.name.space": "Пробел",
-  "macOS (follow system)": "macOS (как в системе)",
   "“%{name}” already exists": "«%{name}» уже существует"
 }

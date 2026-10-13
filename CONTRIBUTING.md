@@ -36,10 +36,10 @@ or `npx skills update`. Do not commit `.agents/`.
 
 | Path | Contents |
 | --- | --- |
-| `macos/Sources/StrataCore` | Foundation-only rules: listing, sorting, filtering, the search index, names, file mutations, themes, and localization. |
+| `macos/Sources/StrataCore` | Foundation-only rules: listing, sorting, filtering, the search index, names, file mutations, and localization. |
 | `macos/Sources/Strata` | The AppKit app: windows, the Columns, Icons, and List modes, sidebar, preview, search, settings, and menus. |
 | `macos/Tests` | `StrataCoreTests` for the rules and `StrataTests` for app behavior. |
-| `macos/Resources` | Translations, the theme catalog, the font, the app icon source, and license texts. |
+| `macos/Resources` | Translations and the app icon source. |
 | `macos/scripts` | The bundle build script and the app icon renderer. |
 
 ## Branching and pull requests
@@ -93,7 +93,7 @@ Format Swift code with
 ## Tests
 
 `StrataCoreTests` cover filtering and typo matching, `*` patterns, fuzzy search
-ranking, numbered names, safe rename, copy, move and replace, theme parsing,
+ranking, numbered names, safe rename, copy, move and replace,
 plural rules, and catalog coverage.
 
 `StrataTests` open real browser windows offscreen and send them synthesized key
@@ -131,8 +131,16 @@ can embed existing URLs, but `gh pr create`/`gh pr edit` do not upload local med
 If an owner must complete the upload, explicitly mark the evidence as pending.
 Maintained README media remains versioned.
 
+## Look and feel
+
+Strata looks like a standard macOS app. Use native AppKit controls, system fonts,
+SF Symbols, and semantic system colors such as `labelColor`,
+`secondaryLabelColor`, `separatorColor`, and `controlAccentColor`, so the app
+follows the user's light or dark appearance and accent color. Do not add custom
+color themes, bundled fonts, or hardcoded colors.
+
 ## Asset policy
 
-Only package assets Strata uses. Record the upstream origin of every bundled
-asset in [third-party notices](THIRD_PARTY_LICENSES.md). Do not add generated
-placeholders or assets of unclear provenance.
+Only package assets Strata uses. Before bundling a third-party asset, record its
+origin and license in the repository. Do not add generated placeholders or assets
+of unclear provenance.

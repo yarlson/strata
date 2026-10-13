@@ -143,15 +143,14 @@ enum SyntaxHighlighter {
         return tokens
     }
 
-    @MainActor
-    static func color(_ kind: TokenKind, _ palette: Palette) -> NSColor {
+    static func color(_ kind: TokenKind) -> NSColor {
         switch kind {
-        case .comment: palette.dimText
-        case .string: palette.string
-        case .number: palette.constant
-        case .keyword: palette.keyword
-        case .type: palette.type
-        case .preprocessor: palette.preprocessor
+        case .comment: .secondaryLabelColor
+        case .string: .systemRed
+        case .number: .systemBlue
+        case .keyword: .systemPink
+        case .type: .systemPurple
+        case .preprocessor: .systemOrange
         }
     }
 

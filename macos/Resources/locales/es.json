@@ -3,7 +3,6 @@
   "About Strata": "Acerca de Strata",
   "Add": "Añadir",
   "Airy": "Amplia",
-  "All": "Todo",
   "An item named “%{name}” already exists in %{folder}. Replacing it will overwrite its contents.": "Ya existe un elemento llamado «%{name}» en %{folder}. Si lo reemplazas, se sobrescribirá su contenido.",
   "Appearance": "Apariencia",
   "Applications": "Aplicaciones",
@@ -34,7 +33,6 @@
   "Could not rename %{name}": "No se pudo cambiar el nombre de %{name}",
   "Created": "Creado",
   "Cut": "Cortar",
-  "Dark": "Oscuro",
   "Default view": "Vista predeterminada",
   "Delete Permanently": "Eliminar permanentemente",
   "Density": "Densidad",
@@ -74,7 +72,6 @@
   "Keep Both": "Conservar ambos",
   "Keyboard shortcuts": "Atajos de teclado",
   "Language": "Idioma",
-  "Light": "Claro",
   "List": "Lista",
   "Location": "Ubicación",
   "Minimize": "Minimizar",
@@ -148,7 +145,6 @@
   "Tabs": "Pestañas",
   "Text size": "Tamaño del texto",
   "That location does not exist.": "Esa ubicación no existe.",
-  "Theme": "Tema",
   "These items will be permanently deleted. This action cannot be undone.": "Estos elementos se eliminarán permanentemente. Esta acción no se puede deshacer.",
   "This folder is empty": "Esta carpeta está vacía",
   "This item will be permanently deleted. This action cannot be undone.": "Este elemento se eliminará permanentemente. Esta acción no se puede deshacer.",
@@ -166,6 +162,5 @@
   "Zoom in": "Acercar",
   "Zoom out": "Alejar",
   "keys.name.space": "Espacio",
-  "macOS (follow system)": "macOS (seguir el sistema)",
   "“%{name}” already exists": "«%{name}» ya existe"
 }

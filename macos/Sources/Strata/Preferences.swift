@@ -18,12 +18,10 @@ final class Preferences {
     static let shared = Preferences()
     nonisolated static let didChange = Notification.Name("StrataPreferencesDidChange")
     nonisolated static let systemLanguage = "system"
-    nonisolated static let systemThemeID = "macos"
 
     enum Key {
         static let viewMode = "viewMode"
         static let showHidden = "showHidden"
-        static let themeID = "themeID"
         static let density = "density"
         static let textSize = "textSize"
         static let restoreTabs = "restoreTabs"
@@ -48,7 +46,6 @@ final class Preferences {
         defaults.register(defaults: [
             Key.viewMode: ViewMode.columns.rawValue,
             Key.showHidden: false,
-            Key.themeID: ThemeCatalog.defaultThemeID,
             Key.density: Density.compact.rawValue,
             Key.textSize: Double(Self.defaultTextSize),
             Key.restoreTabs: true,
@@ -71,11 +68,6 @@ final class Preferences {
     var showHidden: Bool {
         get { defaults.bool(forKey: Key.showHidden) }
         set { set(newValue, Key.showHidden) }
-    }
-
-    var themeID: String {
-        get { defaults.string(forKey: Key.themeID) ?? ThemeCatalog.defaultThemeID }
-        set { set(newValue, Key.themeID) }
     }
 
     var density: Density {

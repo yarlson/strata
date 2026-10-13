@@ -1,15 +1,9 @@
 [files]
 extend-exclude = [
-  "macos/Resources/fonts/**",
-  "macos/Resources/licenses/**",
   # English is checked in en.json; English dictionaries cannot check translations.
   "macos/Resources/locales/*.json",
   "!macos/Resources/locales/en.json",
 ]
 
 [default.extend-words]
-JetBrains = "JetBrains"
 Strata = "Strata"
-# The JetBrains theme name, spelled as upstream spells it.
-Darcula = "Darcula"
-darcula = "darcula"

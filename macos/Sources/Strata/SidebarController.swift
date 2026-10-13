@@ -54,8 +54,7 @@ final class SidebarController: NSViewController, NSOutlineViewDataSource, NSOutl
     private var currentLocation: URL?
 
     override func loadView() {
-        let container = ThemedView(fill: \.background)
-        container.borderEdges = .maxX
+        let container = NSView()
         let scrollView = NSScrollView()
         scrollView.documentView = outline
         scrollView.drawsBackground = false
@@ -67,7 +66,7 @@ final class SidebarController: NSViewController, NSOutlineViewDataSource, NSOutl
             scrollView.topAnchor.constraint(equalTo: container.safeAreaLayoutGuide.topAnchor, constant: 6),
             scrollView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -1),
+            scrollView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
         ])
         let column = NSTableColumn(identifier: .init("sidebar"))
         column.resizingMask = .autoresizingMask
@@ -75,11 +74,10 @@ final class SidebarController: NSViewController, NSOutlineViewDataSource, NSOutl
         outline.columnAutoresizingStyle = .uniformColumnAutoresizingStyle
         outline.outlineTableColumn = column
         outline.headerView = nil
-        outline.backgroundColor = .clear
+        outline.style = .sourceList
         outline.focusRingType = .none
         outline.indentationPerLevel = 0
-        outline.rowSizeStyle = .custom
-        outline.selectionHighlightStyle = .regular
+        outline.rowSizeStyle = .default
         outline.floatsGroupRows = false
         outline.dataSource = self
         outline.delegate = self
@@ -91,7 +89,7 @@ final class SidebarController: NSViewController, NSOutlineViewDataSource, NSOutl
         view = container
         rebuild()
         let center = NotificationCenter.default
-        for name in [VolumeMonitor.didChange, Preferences.didChange, Appearance.didChange] {
+        for name in [VolumeMonitor.didChange, Preferences.didChange] {
             observers.append(
                 center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                     MainActor.assumeIsolated { self?.rebuild() }
@@ -154,7 +152,6 @@ final class SidebarController: NSViewController, NSOutlineViewDataSource, NSOutl
                 volume: $0)
         }
         groups = [places, pinned, devices].filter { !$0.children.isEmpty || $0 === pinned }
-        outline.rowHeight = Appearance.shared.rowHeight
         outline.reloadData()
         groups.forEach { outline.expandItem($0) }
         if let currentLocation { showLocation(currentLocation) }
@@ -241,27 +238,19 @@ final class SidebarController: NSViewController, NSOutlineViewDataSource, NSOutl
 
     func outlineView(_ outlineView: NSOutlineView, shouldShowOutlineCellForItem item: Any) -> Bool { false }
 
-    func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
-        (item as? SidebarNode)?.kind == .group ? Appearance.shared.rowHeight + 8 : Appearance.shared.rowHeight
-    }
-
-    func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {
-        SidebarRowView()
-    }
-
     func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
         guard let node = item as? SidebarNode else { return nil }
-        let appearance = Appearance.shared
         if node.kind == .group {
-            let label = NSTextField(labelWithString: node.title.uppercased(with: Strings.locale))
-            label.font = appearance.font(scale: 0.75, weight: .semibold)
-            label.textColor = appearance.palette.dimText
+            let label = NSTextField(labelWithString: node.title)
+            label.font = .systemFont(ofSize: NSFont.smallSystemFontSize, weight: .semibold)
+            label.textColor = .secondaryLabelColor
             let cell = NSTableCellView()
+            cell.textField = label
             label.translatesAutoresizingMaskIntoConstraints = false
             cell.addSubview(label)
             NSLayoutConstraint.activate([
-                label.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 14),
-                label.bottomAnchor.constraint(equalTo: cell.bottomAnchor, constant: -4),
+                label.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 2),
+                label.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
             ])
             return cell
         }
@@ -300,19 +289,6 @@ final class SidebarController: NSViewController, NSOutlineViewDataSource, NSOutl
     }
 }
 
-final class SidebarRowView: NSTableRowView {
-    override func drawSelection(in dirtyRect: NSRect) {
-        let palette = Appearance.shared.palette
-        palette.highlight.setFill()
-        NSBezierPath(roundedRect: bounds.insetBy(dx: 6, dy: 1), xRadius: 5, yRadius: 5).fill()
-    }
-
-    override var isGroupRowStyle: Bool {
-        get { false }
-        set {}
-    }
-}
-
 final class SidebarCell: NSTableCellView {
     private let ejectAction: (Volume) -> Void
     private let volume: Volume?
@@ -321,20 +297,20 @@ final class SidebarCell: NSTableCellView {
         ejectAction = eject
         volume = node.volume
         super.init(frame: .zero)
-        let appearance = Appearance.shared
-        let icon = NSImageView(image: IconProvider.symbol(node.symbol, size: 13) ?? NSImage())
-        icon.contentTintColor = appearance.palette.accent
+        let icon = NSImageView(image: IconProvider.symbol(node.symbol, size: 14) ?? NSImage())
+        icon.contentTintColor = .controlAccentColor
         let label = NSTextField(labelWithString: node.title)
-        label.font = appearance.font()
-        label.textColor = appearance.palette.text
+        label.font = .systemFont(ofSize: NSFont.systemFontSize)
         label.lineBreakMode = .byTruncatingMiddle
         label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        imageView = icon
+        textField = label
         for child in [icon, label] {
             child.translatesAutoresizingMaskIntoConstraints = false
             addSubview(child)
         }
         NSLayoutConstraint.activate([
-            icon.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
+            icon.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4),
             icon.centerYAnchor.constraint(equalTo: centerYAnchor),
             icon.widthAnchor.constraint(equalToConstant: 16),
             label.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 8),
@@ -345,7 +321,7 @@ final class SidebarCell: NSTableCellView {
                 image: IconProvider.symbol("eject", size: 11) ?? NSImage(), target: self,
                 action: #selector(SidebarCell.ejectClicked))
             button.isBordered = false
-            button.contentTintColor = appearance.palette.dimText
+            button.contentTintColor = .secondaryLabelColor
             button.toolTip = tr("Eject")
             button.setAccessibilityLabel(tr("Eject"))
             button.translatesAutoresizingMaskIntoConstraints = false

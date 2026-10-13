@@ -45,7 +45,7 @@ final class SearchPanel: NSWindowController, NSTableViewDataSource, NSTableViewD
     private let completion: (SearchChoice) -> Void
     private let field = NSSearchField()
     private let table = NSTableView()
-    private let status = NSTextField.themedLabel(color: \.dimText, scale: 0.82)
+    private let status = NSTextField.scaledLabel(color: .secondaryLabelColor, scale: 0.82)
     private let index: SearchIndex
     private var results: [IndexedItem] = []
     private var generation = 0
@@ -79,7 +79,7 @@ final class SearchPanel: NSWindowController, NSTableViewDataSource, NSTableViewD
     }
 
     private func build(_ panel: NSPanel) {
-        let content = ThemedView(fill: \.surface)
+        let content = PaneView()
         field.placeholderString = foldersOnly ? tr("Jump to a folder…") : tr("Search files and folders…")
         field.delegate = self
         field.sendsSearchStringImmediately = true
@@ -224,37 +224,59 @@ final class SearchPanel: NSWindowController, NSTableViewDataSource, NSTableViewD
 
     func numberOfRows(in tableView: NSTableView) -> Int { results.count }
 
-    func tableView(_ tableView: NSTableView, rowViewForRow row: Int) -> NSTableRowView? { FileRowView() }
-
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
         let item = results[row]
+        return SearchResultCell(
+            icon: NSWorkspace.shared.icon(forFile: item.url.path), name: item.name,
+            location: LocationBar.displayPath(item.url.deletingLastPathComponent())
+        )
+    }
+}
+
+/// A result's icon, name, and folder; the text follows the row's selection.
+private final class SearchResultCell: NSTableCellView {
+    private let name = NSTextField(labelWithString: "")
+    private let location = NSTextField(labelWithString: "")
+
+    init(icon image: NSImage, name: String, location: String) {
+        super.init(frame: .zero)
         let appearance = Appearance.shared
-        let cell = NSTableCellView()
-        let icon = NSImageView(image: NSWorkspace.shared.icon(forFile: item.url.path))
-        let name = NSTextField(labelWithString: item.name)
-        name.font = appearance.font(weight: .semibold)
-        name.textColor = appearance.palette.text
-        name.lineBreakMode = .byTruncatingMiddle
-        let path = NSTextField(labelWithString: LocationBar.displayPath(item.url.deletingLastPathComponent()))
-        path.font = appearance.font(scale: 0.82)
-        path.textColor = appearance.palette.dimText
-        path.lineBreakMode = .byTruncatingHead
-        for child in [icon, name, path] {
+        let icon = NSImageView(image: image)
+        self.name.stringValue = name
+        self.name.font = appearance.font(weight: .semibold)
+        self.name.lineBreakMode = .byTruncatingMiddle
+        self.location.stringValue = location
+        self.location.font = appearance.font(scale: 0.82)
+        self.location.lineBreakMode = .byTruncatingHead
+        for child in [icon, self.name, self.location] {
             child.translatesAutoresizingMaskIntoConstraints = false
-            cell.addSubview(child)
+            addSubview(child)
         }
         NSLayoutConstraint.activate([
-            icon.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 10),
-            icon.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+            icon.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
+            icon.centerYAnchor.constraint(equalTo: centerYAnchor),
             icon.widthAnchor.constraint(equalToConstant: 22),
             icon.heightAnchor.constraint(equalToConstant: 22),
-            name.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 10),
-            name.trailingAnchor.constraint(lessThanOrEqualTo: cell.trailingAnchor, constant: -10),
-            name.bottomAnchor.constraint(equalTo: cell.centerYAnchor, constant: 1),
-            path.leadingAnchor.constraint(equalTo: name.leadingAnchor),
-            path.trailingAnchor.constraint(lessThanOrEqualTo: cell.trailingAnchor, constant: -10),
-            path.topAnchor.constraint(equalTo: cell.centerYAnchor, constant: 1),
+            self.name.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 10),
+            self.name.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -10),
+            self.name.bottomAnchor.constraint(equalTo: centerYAnchor, constant: 1),
+            self.location.leadingAnchor.constraint(equalTo: self.name.leadingAnchor),
+            self.location.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -10),
+            self.location.topAnchor.constraint(equalTo: centerYAnchor, constant: 1),
         ])
-        return cell
+        updateColors()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
+    override var backgroundStyle: NSView.BackgroundStyle {
+        didSet { updateColors() }
+    }
+
+    private func updateColors() {
+        let selected = backgroundStyle == .emphasized
+        name.textColor = selected ? .alternateSelectedControlTextColor : .labelColor
+        location.textColor = selected ? .alternateSelectedControlTextColor : .secondaryLabelColor
     }
 }

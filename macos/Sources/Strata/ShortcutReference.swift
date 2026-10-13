@@ -116,23 +116,21 @@ final class ShortcutReference: NSWindowController {
     }
 
     private func rebuild() {
-        let appearance = Appearance.shared
-        window?.appearance = appearance.palette.appearance
         let stack = NSStackView()
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 6
         stack.edgeInsets = NSEdgeInsets(top: 16, left: 20, bottom: 16, right: 20)
         for (title, rows) in Self.sections {
-            let header = NSTextField.themedLabel(
-                title.uppercased(with: Strings.locale), color: \.accent, scale: 0.8, weight: .semibold)
+            let header = NSTextField.scaledLabel(
+                title.uppercased(with: Strings.locale), color: .secondaryLabelColor, scale: 0.8, weight: .semibold)
             stack.addArrangedSubview(header)
             stack.setCustomSpacing(8, after: header)
             let grid = NSGridView(
                 views: rows.map { keys, action in
                     [
-                        NSTextField.themedLabel(keys, color: \.text, scale: 0.9, weight: .semibold),
-                        NSTextField.themedLabel(action, color: \.dimText, scale: 0.9),
+                        NSTextField.scaledLabel(keys, color: .labelColor, scale: 0.9, weight: .semibold),
+                        NSTextField.scaledLabel(action, color: .secondaryLabelColor, scale: 0.9),
                     ]
                 })
             grid.column(at: 0).width = 200
@@ -155,7 +153,7 @@ final class ShortcutReference: NSWindowController {
             stack.bottomAnchor.constraint(equalTo: document.bottomAnchor),
             document.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor),
         ])
-        let content = ThemedView(fill: \.background)
+        let content = PaneView()
         scroll.translatesAutoresizingMaskIntoConstraints = false
         content.addSubview(scroll)
         NSLayoutConstraint.activate([

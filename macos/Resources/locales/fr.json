@@ -3,7 +3,6 @@
   "About Strata": "À propos de Strata",
   "Add": "Ajouter",
   "Airy": "Aérée",
-  "All": "Tout",
   "An item named “%{name}” already exists in %{folder}. Replacing it will overwrite its contents.": "Un élément nommé « %{name} » existe déjà dans %{folder}. Le remplacer écrasera son contenu.",
   "Appearance": "Apparence",
   "Applications": "Applications",
@@ -34,7 +33,6 @@
   "Could not rename %{name}": "Impossible de renommer %{name}",
   "Created": "Créé",
   "Cut": "Couper",
-  "Dark": "Sombre",
   "Default view": "Présentation par défaut",
   "Delete Permanently": "Supprimer définitivement",
   "Density": "Densité",
@@ -74,7 +72,6 @@
   "Keep Both": "Conserver les deux",
   "Keyboard shortcuts": "Raccourcis clavier",
   "Language": "Langue",
-  "Light": "Clair",
   "List": "Liste",
   "Location": "Emplacement",
   "Minimize": "Réduire",
@@ -148,7 +145,6 @@
   "Tabs": "Onglets",
   "Text size": "Taille du texte",
   "That location does not exist.": "Cet emplacement n’existe pas.",
-  "Theme": "Thème",
   "These items will be permanently deleted. This action cannot be undone.": "Ces éléments seront supprimés définitivement. Cette action est irréversible.",
   "This folder is empty": "Ce dossier est vide",
   "This item will be permanently deleted. This action cannot be undone.": "Cet élément sera supprimé définitivement. Cette action est irréversible.",
@@ -166,6 +162,5 @@
   "Zoom in": "Zoom avant",
   "Zoom out": "Zoom arrière",
   "keys.name.space": "Espace",
-  "macOS (follow system)": "macOS (suivre le système)",
   "“%{name}” already exists": "« %{name} » existe déjà"
 }

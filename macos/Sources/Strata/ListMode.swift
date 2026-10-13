@@ -8,7 +8,7 @@ final class ListMode: NSObject, BrowserMode, DirectoryTableOwner {
     let view: NSView
     weak var host: BrowserModeHost?
 
-    private let container = ThemedView(fill: \.background)
+    private let container = PaneView()
     private let split: PreviewSplit
     private var controller: DirectoryTableController?
     private var memory = SelectionMemory()

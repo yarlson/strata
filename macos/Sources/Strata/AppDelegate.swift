@@ -131,7 +131,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: App commands
 
     @objc func showSettings(_ sender: Any?) {
-        SettingsWindowController.shared.window?.appearance = Appearance.shared.palette.appearance
         SettingsWindowController.shared.showWindow(nil)
     }
 
