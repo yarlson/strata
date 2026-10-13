@@ -64,6 +64,14 @@ run = "./scripts/chooser-dev.sh"
 description = "Build the release binary"
 run = "cargo build --release"
 
+[tasks.macos-app]
+description = "Build the native macOS app into target/macos/Strata.app"
+run = "./macos/scripts/build-app.sh"
+
+[tasks.macos-test]
+description = "Run the native macOS app's Swift tests"
+run = "swift test --package-path macos"
+
 [tasks.install-local]
 description = "Install a per-user binary, icon, and desktop entry"
 depends = ["build"]

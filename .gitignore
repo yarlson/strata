@@ -1,4 +1,6 @@
 /target
+/macos/.build/
+/macos/.swiftpm/
 /packaging/math-renderer/node_modules/
 *.swp
 *.swo

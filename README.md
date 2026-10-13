@@ -29,6 +29,7 @@ Strata combines spatial Miller-column navigation with familiar Icons and List vi
   - [Interactive installation](#interactive-installation)
   - [AI-assisted installation](#ai-assisted-installation)
   - [Manual installation](#manual-installation)
+  - [macOS](#macos)
 - [Usage and desktop integration](#usage-and-desktop-integration)
   - [Desktop entry](#desktop-entry)
   - [Make Strata the Omarchy file manager](#make-strata-the-omarchy-file-manager)
@@ -243,6 +244,19 @@ gtk-update-icon-cache -qtf ~/.local/share/icons/hicolor 2>/dev/null || true
 ```
 
 User preferences and custom themes remain under the XDG configuration directories so an uninstall does not destroy personal settings.
+
+### macOS
+
+A native macOS app (AppKit, macOS 14 or newer) lives in `macos/`. Build it with
+Xcode 16 or newer, then open it:
+
+```bash
+mise run macos-app            # writes target/macos/Strata.app
+open target/macos/Strata.app
+```
+
+See [Strata for macOS](docs/macos.md) for tests, keyboard differences, and the
+features that are Linux-only so far.
 
 ## Usage and desktop integration
 
