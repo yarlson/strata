@@ -126,18 +126,18 @@ final class SidebarController: NSViewController, NSOutlineViewDataSource, NSOutl
         let fileManager = FileManager.default
         func place(_ directory: FileManager.SearchPathDirectory, _ title: String, _ symbol: String) -> SidebarNode? {
             fileManager.urls(for: directory, in: .userDomainMask).first.map {
-                SidebarNode(kind: .place, title: tr(title), url: $0, symbol: symbol)
+                SidebarNode(kind: .place, title: title, url: $0, symbol: symbol)
             }
         }
         let places = SidebarNode(kind: .group, title: tr("Places"))
         places.children = [
             SidebarNode(kind: .place, title: tr("Home"), url: home, symbol: "house"),
-            place(.desktopDirectory, "Desktop", "menubar.dock.rectangle"),
-            place(.documentDirectory, "Documents", "doc.text"),
-            place(.downloadsDirectory, "Downloads", "arrow.down.circle"),
-            place(.picturesDirectory, "Pictures", "photo"),
-            place(.musicDirectory, "Music", "music.note"),
-            place(.moviesDirectory, "Videos", "film"),
+            place(.desktopDirectory, tr("Desktop"), "menubar.dock.rectangle"),
+            place(.documentDirectory, tr("Documents"), "doc.text"),
+            place(.downloadsDirectory, tr("Downloads"), "arrow.down.circle"),
+            place(.picturesDirectory, tr("Pictures"), "photo"),
+            place(.musicDirectory, tr("Music"), "music.note"),
+            place(.moviesDirectory, tr("Videos"), "film"),
             SidebarNode(
                 kind: .place, title: tr("Applications"), url: URL(fileURLWithPath: "/Applications"),
                 symbol: "square.grid.2x2"),

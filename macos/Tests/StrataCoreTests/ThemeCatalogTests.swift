@@ -8,9 +8,8 @@ import Testing
 struct ThemeCatalogTests {
     @Test func readsTheBundledCatalog() throws {
         let catalog = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent().deletingLastPathComponent()
-            .deletingLastPathComponent().deletingLastPathComponent()
-            .appendingPathComponent("data/themes/catalog.toml")
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Resources/themes/catalog.toml")
         let themes = ThemeCatalog.parse(try String(contentsOf: catalog, encoding: .utf8))
         #expect(themes.count == 95)
         let azure = try #require(themes.first { $0.id == ThemeCatalog.defaultThemeID })

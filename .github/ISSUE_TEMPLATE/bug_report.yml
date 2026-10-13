@@ -12,8 +12,8 @@ body:
     id: version
     attributes:
       label: Strata version
-      description: Find this under Settings → Updates, or provide the commit SHA for a source build.
-      placeholder: e.g. 0.5.0 or commit abc1234
+      description: Find this under Strata → About Strata, or provide the commit SHA you built.
+      placeholder: e.g. 1.0.0 or commit abc1234
     validations:
       required: true
 
@@ -22,9 +22,8 @@ body:
     attributes:
       label: Installation method
       options:
-        - GitHub release archive
-        - AUR package
         - Built from source
+        - Copied from another Mac
         - Other
     validations:
       required: true
@@ -32,8 +31,8 @@ body:
   - type: input
     id: environment
     attributes:
-      label: Linux distribution and desktop environment
-      placeholder: e.g. Arch Linux, Hyprland 0.49
+      label: macOS version and Mac
+      placeholder: e.g. macOS 26.1, MacBook Air (Apple silicon)
     validations:
       required: true
 
@@ -76,20 +75,13 @@ body:
       value: |
         ### Crash logs
 
-        If Strata crashed, look for its latest systemd-coredump report with:
+        If Strata crashed, open **Console**, choose **Crash Reports**, and select the latest `Strata` report. Messages from a run are available with:
 
         ```shell
-        coredumpctl list strata
-        coredumpctl info strata
+        log show --last 30m --predicate 'process == "Strata"'
         ```
 
-        Additional application messages may be available with:
-
-        ```shell
-        journalctl --user _COMM=strata --since "30 minutes ago"
-        ```
-
-        Paste relevant text below after removing private paths, filenames, hostnames, and secrets. **Do not upload a core dump**: it can contain passwords, tokens, and private document contents.
+        Paste relevant text below after removing private paths, filenames, hostnames, and secrets. Do not attach memory dumps: they can contain passwords, tokens, and private document contents.
 
   - type: textarea
     id: logs

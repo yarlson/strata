@@ -12,11 +12,7 @@ enum Strings {
             Localizer.supportedLocales.contains(choice)
             ? choice
             : Localizer.resolveLocale(preferred: Locale.preferredLanguages)
-        return Localizer(
-            locale: locale,
-            catalogDirectory: resources.appendingPathComponent("locales"),
-            overlayDirectory: resources.appendingPathComponent("locales/macos")
-        )
+        return Localizer(locale: locale, catalogDirectory: resources.appendingPathComponent("locales"))
     }()
 
     static var locale: Locale { Locale(identifier: localizer.locale) }

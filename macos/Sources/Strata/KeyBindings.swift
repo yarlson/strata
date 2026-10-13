@@ -121,7 +121,7 @@ struct KeyBinding {
     ]
 }
 
-/// Every Strata shortcut on macOS. Linux Ctrl shortcuts use Command here.
+/// Every Strata shortcut.
 enum Bindings {
     static let copy = KeyBinding(.character("c"), .command)
     static let cut = KeyBinding(.character("x"), .command)

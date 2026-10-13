@@ -5,11 +5,9 @@ import Testing
 
 @testable import StrataCore
 
-private let repository = URL(fileURLWithPath: #filePath)
-    .deletingLastPathComponent().deletingLastPathComponent()
-    .deletingLastPathComponent().deletingLastPathComponent()
-private let sharedCatalogs = repository.appendingPathComponent("data/locales")
-private let overlayCatalogs = repository.appendingPathComponent("macos/Resources/locales")
+private let package = URL(fileURLWithPath: #filePath)
+    .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+private let catalogs = package.appendingPathComponent("Resources/locales")
 
 struct LocalizerTests {
     @Test(arguments: [
@@ -35,20 +33,21 @@ struct LocalizerTests {
         #expect(text == "Open %{name} copy?")
     }
 
-    @Test func translatesSharedMessagesAndCounts() {
-        let german = Localizer(locale: "de", catalogDirectory: sharedCatalogs, overlayDirectory: overlayCatalogs)
+    @Test func translatesMessagesAndCounts() {
+        let german = Localizer(locale: "de", catalogDirectory: catalogs)
         #expect(german.tr("Cancel") == "Abbrechen")
         #expect(german.count("items", 1) == "1 Element")
-        let english = Localizer(locale: "en", catalogDirectory: sharedCatalogs, overlayDirectory: overlayCatalogs)
+        let english = Localizer(locale: "en", catalogDirectory: catalogs)
+        #expect(english.tr("keys.name.space") == "Space")
         #expect(english.count("items", 1_200) == "1,200 items")
     }
 
     @Test func missingMessagesFallBackToEnglishKeys() {
-        let french = Localizer(locale: "fr", catalogDirectory: sharedCatalogs, overlayDirectory: overlayCatalogs)
+        let french = Localizer(locale: "fr", catalogDirectory: catalogs)
         #expect(french.tr("Unknown message %{x}", ["x": "1"]) == "Unknown message 1")
     }
 
-    @Test func overlayCatalogsCoverEveryLanguageAndKeepPlaceholders() throws {
+    @Test func catalogsCoverEveryLanguageAndKeepPlaceholders() throws {
         let english = try catalog("en")
         #expect(!english.isEmpty)
         for locale in Localizer.supportedLocales {
@@ -61,12 +60,8 @@ struct LocalizerTests {
     }
 
     @Test func everyAppMessageHasACatalogEntry() throws {
-        var known = Set(try catalog("en").keys)
-        for file in ["en.json", "messages/en.json"] {
-            let data = try Data(contentsOf: sharedCatalogs.appendingPathComponent(file))
-            known.formUnion(try JSONDecoder().decode([String: String].self, from: data).keys)
-        }
-        let sources = repository.appendingPathComponent("macos/Sources/Strata")
+        let known = Set(try catalog("en").keys)
+        let sources = package.appendingPathComponent("Sources/Strata")
         let files = try FileManager.default.contentsOfDirectory(at: sources, includingPropertiesForKeys: nil)
         let call = /\btr\(\s*"((?:[^"\\]|\\.)*)"/
         var missing: [String] = []
@@ -84,7 +79,7 @@ struct LocalizerTests {
     }
 
     private func catalog(_ locale: String) throws -> [String: String] {
-        let data = try Data(contentsOf: overlayCatalogs.appendingPathComponent("\(locale).json"))
+        let data = try Data(contentsOf: catalogs.appendingPathComponent("\(locale).json"))
         return try JSONDecoder().decode([String: String].self, from: data)
     }
 

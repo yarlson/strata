@@ -27,7 +27,6 @@ while (($#)); do
   shift
 done
 
-version="$(sed -n 's/^version = "\(.*\)"$/\1/p' "$repo/Cargo.toml" | head -n 1)"
 scratch="$(mktemp -d)"
 trap 'rm -rf "$scratch"' EXIT
 
@@ -38,37 +37,32 @@ app="$output/Strata.app"
 contents="$app/Contents"
 resources="$contents/Resources"
 rm -rf "$app"
-mkdir -p "$contents/MacOS" "$resources/locales/messages" "$resources/locales/macos" \
-  "$resources/themes" "$resources/fonts" "$resources/licenses"
+mkdir -p "$contents/MacOS" "$resources"
 
 cp "$bin_dir/Strata" "$contents/MacOS/Strata"
-sed "s/@VERSION@/$version/g" "$package/Info.plist" >"$contents/Info.plist"
-cp "$repo"/data/locales/*.json "$resources/locales/"
-cp "$repo"/data/locales/messages/*.json "$resources/locales/messages/"
-cp "$package"/Resources/locales/*.json "$resources/locales/macos/"
-cp "$repo/data/themes/catalog.toml" "$resources/themes/"
-cp "$repo/data/fonts/JetBrainsMono[wght].ttf" "$resources/fonts/"
+cp "$package/Info.plist" "$contents/Info.plist"
+cp -R "$package/Resources/locales" "$package/Resources/themes" "$package/Resources/fonts" \
+  "$package/Resources/licenses" "$resources/"
 cp "$repo/LICENSE" "$repo/THIRD_PARTY_LICENSES.md" "$resources/licenses/"
-cp "$repo/data/licenses/JetBrainsMono-OFL-1.1.txt" "$repo/data/licenses/Tinted-Theming-MIT.txt" \
-  "$resources/licenses/"
 
-swift "$package/scripts/render-icon.swift" \
-  "$repo/data/icons/scalable/apps/io.github.lgse.Strata.svg" "$scratch/AppIcon.iconset"
+swift "$package/scripts/render-icon.swift" "$package/Resources/AppIcon.svg" "$scratch/AppIcon.iconset"
 iconutil -c icns -o "$resources/AppIcon.icns" "$scratch/AppIcon.iconset"
 
 # Localized folder-access prompts, one .lproj per supported language.
 python3 -I - "$package/Resources/locales" "$resources" <<'PY'
 import json, pathlib, sys
 
-overlay, resources = map(pathlib.Path, sys.argv[1:])
+catalogs, resources = map(pathlib.Path, sys.argv[1:])
 message = "Strata shows and manages the files you browse."
 keys = [
     "NSDesktopFolderUsageDescription", "NSDocumentsFolderUsageDescription",
     "NSDownloadsFolderUsageDescription", "NSRemovableVolumesUsageDescription",
     "NSNetworkVolumesUsageDescription",
 ]
-for catalog in sorted(overlay.glob("*.json")):
+for catalog in sorted(catalogs.glob("*.json")):
     locale = catalog.stem
+    if locale == "counts":
+        continue
     text = json.loads(catalog.read_text(encoding="utf-8")).get(message, message)
     escaped = text.replace("\\", "\\\\").replace('"', '\\"')
     lproj = resources / f"{'zh-Hans' if locale == 'zh-CN' else locale}.lproj"

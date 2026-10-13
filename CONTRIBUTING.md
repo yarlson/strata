@@ -4,33 +4,22 @@ Thanks for helping build Strata. The project is early, so discuss large changes 
 
 ## Development setup
 
-Install [mise](https://mise.jdx.dev), then install the pinned toolchain (Rust
-1.98.1, Python, `cargo-deny`, `typos`, `cargo-watch`):
+You need macOS 14 or newer and Xcode 16 or newer (the Swift 6 toolchain).
+Install [mise](https://mise.jdx.dev), then install the pinned spelling checker:
 
 ```bash
 mise install
 ```
 
-GTK 4, Fontconfig, a C toolchain, and `pkg-config` still come from the system
-package manager. On Arch Linux:
-
-```bash
-sudo pacman -S --needed base-devel fontconfig gtk4 gtksourceview5 poppler-glib
-```
-
-Run the application:
+Build a debug app and open it:
 
 ```bash
 mise run dev
 ```
 
-To rebuild and restart the running application whenever code or bundled assets
-change, use the development watcher. On Arch, Debian/Ubuntu, and Fedora, it
-installs missing native GTK libraries (prompting for `sudo`) when needed:
-
-```bash
-mise run start-dev
-```
+`mise run build` writes the release app to `target/macos/Strata.app`. The
+underlying script, `macos/scripts/build-app.sh`, also accepts `--universal`
+(Apple silicon and Intel) and `--output DIR`.
 
 Project coding-agent skills are listed in `skills-lock.json`. After cloning,
 restore them into the gitignored `.agents/` directory (requires Node.js for
@@ -43,6 +32,16 @@ npx skills experimental_install
 Commit `skills-lock.json` when adding or updating skills with `npx skills add`
 or `npx skills update`. Do not commit `.agents/`.
 
+## Code layout
+
+| Path | Contents |
+| --- | --- |
+| `macos/Sources/StrataCore` | Foundation-only rules: listing, sorting, filtering, the search index, names, file mutations, themes, and localization. |
+| `macos/Sources/Strata` | The AppKit app: windows, the Columns, Icons, and List modes, sidebar, preview, search, settings, and menus. |
+| `macos/Tests` | `StrataCoreTests` for the rules and `StrataTests` for app behavior. |
+| `macos/Resources` | Translations, the theme catalog, the font, the app icon source, and license texts. |
+| `macos/scripts` | The bundle build script and the app icon renderer. |
+
 ## Branching and pull requests
 
 All changes to `main` go through a pull request. The normal process is:
@@ -51,7 +50,7 @@ All changes to `main` go through a pull request. The normal process is:
 2. Update local `main`, then create a branch from it.
 3. Name the branch `<type>/<issue-number>-<short-kebab-description>`, such as `feat/6-sandbox-previews` or `fix/42-preview-timeout`.
 4. Make focused Conventional Commits and push the branch.
-5. Open a pull request that references the issue and wait for CI.
+5. Open a pull request that references the issue.
 6. The maintainer tests the pull request before it is merged. Do not push directly to `main`.
 
 Use the Conventional Commit form for commit messages and pull request titles:
@@ -63,7 +62,7 @@ Use the Conventional Commit form for commit messages and pull request titles:
 Common types are `feat`, `fix`, `docs`, `refactor`, `test`, `perf`, `build`, `ci`, and `chore`. Examples:
 
 ```text
-feat(preview): sandbox untrusted image parsing
+feat(preview): render HTML files
 fix(navigation): preserve selection after reload
 ```
 
@@ -82,72 +81,46 @@ Before opening a pull request:
 mise run check
 ```
 
-Without mise, `./scripts/check.sh` runs the same Cargo checks.
+This runs:
 
-The always-available checks are:
-
-```bash
-cargo fmt --all --check
-cargo check --all-targets --all-features
-cargo clippy --all-targets --all-features -- -D warnings
-cargo test --all-targets --all-features
-```
-
-CI additionally runs:
-
-- `cargo-deny` for security advisories, dependency licenses, duplicate versions, and unapproved sources
+- `swift format lint --strict` with the settings in `macos/.swift-format`
+- `swift test --package-path macos`
 - `typos` for spelling
-- Compilation with the latest stable Rust release
 
-`mise install` provides `cargo-deny` and `typos`. Without mise, install them with:
+Format Swift code with
+`swift format --in-place --recursive macos/Sources macos/Tests`.
 
-```bash
-cargo install --locked cargo-deny
-cargo install --locked typos-cli
-```
+## Tests
 
-## End-to-end GUI tests
+`StrataCoreTests` cover filtering and typo matching, `*` patterns, fuzzy search
+ranking, numbered names, safe rename, copy, move and replace, theme parsing,
+plural rules, and catalog coverage.
 
-`./scripts/check.sh` clears desktop display variables and skips display-dependent
-Rust tests. Run `./scripts/test-headless.py` to include those tests on a private
-Xvfb display without opening windows on your desktop. The end-to-end suite also
-uses a private display and checks the real application and resulting files:
+`StrataTests` open real browser windows offscreen and send them synthesized key
+events. Keep app tests in that style: never order a window front, take keyboard
+focus, use the general pasteboard, or move files to the user's Trash. Use a
+private `NSPasteboard` and the stand-in Trash that `FileMutationsTests` shows.
 
-```bash
-./scripts/e2e.sh
-```
+## Translations
 
-It needs Xvfb, `at-spi2-core`, the Python AT-SPI bindings, D-Bus, and
-ImageMagick; the script names the packages when one is missing. See
-[end-to-end GUI testing](docs/e2e-testing.md) for how scenarios are written,
-how failure artifacts are collected, and how to regenerate the visual
-baselines.
-
-## Performance fixtures
-
-Generate and profile deterministic large directories with:
-
-```bash
-./scripts/generate-fixture.sh target/fixtures
-cargo build --release
-STRATA_BINARY=target/release/strata ./scripts/profile-fixture.sh target/fixtures/100000
-```
-
-See [the performance baseline](docs/performance-baseline.md) for recorded results and measurement guidance.
+Strata ships in English, French, German, Spanish, Japanese, Brazilian
+Portuguese, Korean, Vietnamese, Italian, Russian, and Simplified Chinese.
+Messages are English-keyed JSON catalogs in `macos/Resources/locales`, one file
+per language, plus `counts.json` for plural forms. Add every new message to all
+eleven files in the same change, with the same `%{placeholders}`. The catalog
+coverage test fails when a `tr("…")` message has no entry.
 
 ## Engineering expectations
 
-- Keep filesystem, search, preview, and operation work off the GTK thread.
+- Keep filesystem, search, and preview work off the main thread.
 - Make asynchronous work cancellable or reject stale results.
-- Preserve native paths; do not assume filenames are valid UTF-8.
-- Put product state and behavior outside widgets where practical.
+- Never overwrite a user's file silently. Route file changes through
+  `FileMutations` and `FileOperationCenter`.
+- Put rules that do not need AppKit in `StrataCore`, where they are testable.
 - Add an abstraction only for real variation, isolation, or testability.
 - Add focused tests for state transitions and filesystem edge cases.
-- Avoid `unwrap`, `todo!`, `unimplemented!`, and debug macros in committed code.
-- Follow the [unsafe code policy](docs/unsafe-code.md); never use `#[allow(unsafe_code)]`.
 - Preserve licensing and attribution for every new asset and dependency.
 
-See the [architecture principles](docs/architecture.md) before making structural changes.
 Track planned work in GitHub issues rather than committed task checklists.
 
 For user-visible PRs, upload sanitized before/after screenshots or a short video
@@ -156,8 +129,10 @@ links in the Visual evidence section. Keep review captures and reports out of Gi
 use local scratch or ignored `target/` paths while preparing them. The GitHub CLI
 can embed existing URLs, but `gh pr create`/`gh pr edit` do not upload local media.
 If an owner must complete the upload, explicitly mark the evidence as pending.
-Maintained README media and visual-regression test baselines remain versioned.
+Maintained README media remains versioned.
 
 ## Asset policy
 
-Only package assets Strata uses. Bundled icons use `strata-` names to avoid collisions, while their upstream origin is recorded in [third-party notices](THIRD_PARTY_LICENSES.md). Do not add generated placeholders or assets of unclear provenance.
+Only package assets Strata uses. Record the upstream origin of every bundled
+asset in [third-party notices](THIRD_PARTY_LICENSES.md). Do not add generated
+placeholders or assets of unclear provenance.

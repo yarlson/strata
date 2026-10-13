@@ -6,8 +6,7 @@ public enum PluralCategory: String, Sendable {
     case one, few, many, other
 }
 
-/// Looks up English-keyed messages in Strata's shared JSON catalogs and the
-/// macOS overlay catalog, with English fallback.
+/// Looks up English-keyed messages in Strata's JSON catalogs, with English fallback.
 public struct Localizer: Sendable {
     public static let supportedLocales = [
         "en", "fr", "de", "es", "ja", "pt-BR", "ko", "vi", "it", "ru", "zh-CN",
@@ -18,12 +17,12 @@ public struct Localizer: Sendable {
     private let fallback: [String: String]
     private let counts: [String: [String: String]]
 
-    /// `catalogDirectory` holds `<locale>.json`, `messages/<locale>.json`, and
-    /// `counts.json`; `overlayDirectory` holds macOS-only `<locale>.json` files.
-    public init(locale: String, catalogDirectory: URL, overlayDirectory: URL) {
+    /// `catalogDirectory` holds one `<locale>.json` per language and the
+    /// multilingual `counts.json`.
+    public init(locale: String, catalogDirectory: URL) {
         self.locale = locale
-        messages = Self.flatCatalog(locale, catalogDirectory, overlayDirectory)
-        fallback = locale == "en" ? [:] : Self.flatCatalog("en", catalogDirectory, overlayDirectory)
+        messages = Self.flatCatalog(catalogDirectory.appendingPathComponent("\(locale).json"))
+        fallback = locale == "en" ? [:] : Self.flatCatalog(catalogDirectory.appendingPathComponent("en.json"))
         counts = Self.countCatalog(catalogDirectory.appendingPathComponent("counts.json"))
     }
 
@@ -107,23 +106,9 @@ public struct Localizer: Sendable {
         return result + rest
     }
 
-    private static func flatCatalog(
-        _ locale: String, _ catalogDirectory: URL, _ overlayDirectory: URL
-    ) -> [String: String] {
-        var merged: [String: String] = [:]
-        for url in [
-            catalogDirectory.appendingPathComponent("\(locale).json"),
-            catalogDirectory.appendingPathComponent("messages/\(locale).json"),
-            overlayDirectory.appendingPathComponent("\(locale).json"),
-        ] {
-            guard let data = try? Data(contentsOf: url),
-                let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-            else { continue }
-            for case let (key, value as String) in object {
-                merged[key] = value
-            }
-        }
-        return merged
+    private static func flatCatalog(_ url: URL) -> [String: String] {
+        guard let data = try? Data(contentsOf: url) else { return [:] }
+        return (try? JSONDecoder().decode([String: String].self, from: data)) ?? [:]
     }
 
     private static func countCatalog(_ url: URL) -> [String: [String: String]] {

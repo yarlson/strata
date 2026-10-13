@@ -4,16 +4,15 @@
 
 All rules in this file are defaults that the repository owner may override with
 explicit instructions or consent for the current task. This applies even where
-rules say "must", "never", or "only", including isolation, host builds and tests,
-validation, Git workflow, and pull request requirements. No rule in this file is
-exempt from this override.
+rules say "must", "never", or "only", including validation, Git workflow, and
+pull request requirements. No rule in this file is exempt from this override.
 
 A direct request to take a normally disallowed action is sufficient consent;
-for example, "build on the host, not in a container" authorizes a native host
-build. Carry out the requested action rather than refusing because of this file
-or repeatedly asking for permission already given. Ask only if the requested
-scope is genuinely unclear. Silence, urgency, and unrelated prior consent are
-not overrides; keep the other defaults in effect.
+for example, "push straight to main" authorizes a direct push. Carry out the
+requested action rather than refusing because of this file or repeatedly asking
+for permission already given. Ask only if the requested scope is genuinely
+unclear. Silence, urgency, and unrelated prior consent are not overrides; keep
+the other defaults in effect.
 
 Record the override and any skipped checks or unverified behavior in the handoff
 and, when relevant, the PR description. Never report skipped checks as passed.
@@ -36,7 +35,7 @@ under `.agents/`.
 
 ## Git workflow
 
-- **One conversation, one PR by default.** Treat follow-up requests in the same conversation as changes to the existing task and PR unless the owner explicitly requests a separate PR. Keep implementing, committing, and pushing to that PR's branch; do not create stacked PRs or split follow-ups onto separate task branches. If isolation requires a temporary worktree, integrate its changes into the existing PR rather than opening another one.
+- **One conversation, one PR by default.** Treat follow-up requests in the same conversation as changes to the existing task and PR unless the owner explicitly requests a separate PR. Keep implementing, committing, and pushing to that PR's branch; do not create stacked PRs or split follow-ups onto separate task branches.
 - Never commit or push directly to `main`. Work from a GitHub issue and submit changes through a pull request.
 - Name branches `<type>/<issue-number>-<short-kebab-description>`, for example `feat/6-sandbox-previews`. Use Conventional Commit types such as `feat`, `fix`, `docs`, `refactor`, `test`, `perf`, `build`, `ci`, and `chore`.
 - Write commits and pull request titles in Conventional Commits format: `<type>(optional-scope): <imperative description>`.
@@ -44,222 +43,134 @@ under `.agents/`.
 
 ## Pre-push checks
 
-Validation is risk-based, but CI remains unchanged and is the authoritative full
-suite. Map the behavior and callers affected by the change (including shared
-infrastructure, preferences, and views); do not infer coverage automatically
-from changed file names. For a bounded change, run the relevant regression tests
-and targeted checks, confirm the selected test count is nonzero, and record the
-scope rationale, exact commands and results, and any intentionally omitted
-checks in the handoff. Rerun affected tests after making changes; do not rerun
-unrelated suites merely to satisfy a blanket rule. Passing this justified targeted
-validation is sufficient before pushing a bounded change; full local suites are
-required only for the escalation cases below. Required GitHub checks must still
-pass before merge.
+Strata is a Swift package in `macos/`. Before pushing, run:
 
-- **Scoped tests are the default, including after failures.** When a run has an
-  isolated failure, reproduce that exact test first. After fixing it, rerun that
-  test and the affected callers/regressions only. Do not rerun the entire Rust or
-  E2E suite to diagnose one failure, recover a green summary, or satisfy a generic
-  review/push checklist. Preserve earlier results and report the scoped rerun.
-  A full rerun requires concrete evidence of broader impact under the escalation
-  rule below or an explicit owner request; state that reason before launching it.
-  If the owner directs scoped validation, do not expand it without renewed consent.
-- Run local lint and formatting checks only at the pre-push checkpoint, not
-  after each edit or during the test/implementation loop. For Rust changes, run
-  `./scripts/quality.sh fmt` and `./scripts/quality.sh clippy` on the final code
-  before pushing. If fixes change that code, rerun the affected checks before
-  the push. CI continues to run its existing lint and formatting checks.
-- Use `scripts/test-headless.py` for native targeted Rust tests, for example
-  `./scripts/test-headless.py services::operations::tests`; its arguments are
-  forwarded after the fixed `cargo test --all-targets --all-features` arguments.
-  This filters test names across targets, not compilation to one target.
-  The selected filter must match at least one test, including relevant views,
-  callers, or preferences coverage.
-- E2E selections may use repository-relative test paths and pytest `-k`, for
-  example `./scripts/e2e.sh tests/e2e/scenarios/test_inline_renaming.py` or
-  `./scripts/e2e.sh -k 'rename and not visual'`. Confirm collection selects
-  tests with `--collect-only` when useful. `scripts/e2e.sh` is the canonical
-  pinned-container runner; `scripts/e2e-native.sh` is host-toolkit debugging
-  only and cannot replace it. `scripts/quality.sh` accepts only `all`, `fmt`,
-  `clippy`, or `test` and does not forward test filters.
-- Use full pinned `./scripts/quality.sh` phases and canonical
-  `STRATA_CONTAINER_ENGINE=podman ./scripts/e2e.sh` when impact is broad or
-  uncertain. Escalate to both for shared infrastructure, dependencies,
-  build/CI/harness code, cross-cutting behavior, or uncertain coverage.
-  Even after escalation, isolate individual failures with scoped tests rather
-  than repeating the full run. Use `./scripts/quality.sh test` only when a full
-  Rust run is justified; defer `fmt` and `clippy` to the pre-push checkpoint.
-  Preserve pinned image provenance and the existing `target/quality-container`
-  and `target/e2e-container` caches.
-- GUI and delegated checks must never use the desktop or an inherited session
-  bus. Use private Xvfb and private D-Bus, clear inherited display variables,
-  disable accessibility bridging for Rust tests (E2E needs its private AT-SPI
-  bus), and require GTK tests to run (not silently skip). Stop if the isolated display or bus is unavailable; never fall back to
-  the user's display. See `docs/e2e-testing.md`.
-- Documentation-only changes need no GUI/build tests: review the complete diff,
-  validate links and example filters against the scripts and existing tests, and
-  run `git diff --check`. These checks do not bypass required CI checks.
-- The explicit owner consent policy above applies to all validation requirements,
-  not just local tests. A generic request to push does not by itself authorize
-  skipping checks; a direct request to push without specified checks does.
-- Unless explicitly overridden, fix failures before pushing rather than
-  relying on CI. Keep tests portable
-  across supported environments and avoid assertions that depend on
-  platform-specific URI normalization or other incidental system behavior.
+```bash
+mise run check        # swift format lint --strict, swift test, typos
+mise run build        # when the change touches the bundle, resources, or scripts
+```
 
-## E2E base-image reuse
+- Format with `swift format --in-place --recursive macos/Sources macos/Tests`.
+  Run lint and formatting at the pre-push checkpoint, not after every edit.
+- For a bounded change, run the affected tests with
+  `swift test --package-path macos --filter <Suite or test>` while working, and
+  confirm the filter selects at least one test. Run the full `mise run check`
+  before pushing.
+- When one test fails, reproduce that test alone first. Fix it, rerun it and its
+  callers, then rerun the full check once.
+- Documentation-only changes need no build or tests: review the complete diff,
+  check links, and run `typos` and `git diff --check`.
+- Unless explicitly overridden, fix failures before pushing.
 
-- Run `./scripts/e2e.sh` for normal local testing. It verifies and reuses the local
-  pinned base, or pulls the published base once if missing. It must not rebuild
-  images or fetch Ubuntu packages during ordinary test runs.
-- Prefer rootless Podman and keep the task's isolated configuration, storage, and
-  runtime directories across commands. Do not create a fresh container store for
-  every invocation, prune other sessions' images, or bypass image-input checks.
-- Only when intentionally changing environment inputs, or when an unpublished
-  environment must be bootstrapped, run explicitly:
-  `STRATA_CONTAINER_ENGINE=podman python3 scripts/e2e_base.py build`.
-  Run this once, then return to `./scripts/e2e.sh`. Do not habitually rebuild bases
-  as a pre-test step. Preserve `target/e2e-container` so Cargo can reuse its cache.
-- Published bases are updated by the trusted-main publisher when environment
-  inputs change. Application edits do not require rebuilding the base. Different
-  local UID/GID values are handled by generated container account files.
-- The three-minute CI duration is a performance target, not a merge requirement.
-  Timing is informational; test failures, incomplete coverage, and invalid
-  provenance still fail CI. See `docs/e2e-testing.md`.
+## Running the app
 
-## Private media runtime patches
-
-- Before changing GTK, GStreamer, GLib, their Rust bindings, media plugins, or
-  release/build images, review `packaging/media-runtime/README.md` and the pinned
-  patches/source hashes. These are version-specific toolkit patches, not Cargo
-  patches; updating Rust crates alone does not apply or retire them.
-- For each runtime update, inspect upstream fixes and the affected ownership paths.
-  Record whether each patch is still required, needs rebasing, or is superseded.
-  Never silently drop a patch or accept a fuzzy application. Update source hashes,
-  notices, build requirements, and evidence together when changing the baseline.
-- Rebuild and rerun the standalone lifetime and GTK lifecycle regressions against
-  both the unpatched and patched candidate baseline. Confirm actual private-library
-  loading and test supported architectures, plugins, sandbox helpers, and installed
-  upgrade/rollback paths before promoting a runtime-bearing release. Preserve GUI
-  isolation; owner-operated GPU captures require the documented explicit consent.
-- The current patch kit is opt-in source material, not integrated into release
-  builds or installation. Do not claim the next release contains these fixes until
-  the build applies them, the artifact includes the runtime, and installed-artifact
-  tests verify it is loaded. Keep unresolved RAM growth separate from demonstrated
-  crash/GL-resource improvements.
+- Never take the owner's keyboard focus. Launch the app for visual checks in the
+  background with `open -g -n target/macos/Strata.app`, and capture only its
+  window by window ID (`screencapture -x -o -l<id>`). A focused file manager can
+  receive the owner's keystrokes, including Trash and delete shortcuts.
+- Prefer offscreen app tests to manual checks for behavior.
 
 ## Issues and pull requests
 
 - Automated agents must follow the same issue-first workflow and pull request template as human contributors; do not remove or bypass template sections.
 - Use the bug report form for defects, the feature request form for enhancements, and a blank issue only when neither form fits.
-- Bug reports must include the Strata version, installation method, environment, reproduction steps, expected behavior, and any available sanitized logs. Never ask reporters to upload a core dump because it may contain secrets or private document contents.
-- Keep pull request descriptions concise: explain what changed and why, provide manual steps to exercise the feature or reproduce the fixed bug, state the expected result, and link the issue. Do not list automated checks that CI already runs.
+- Bug reports must include the Strata version, installation method, macOS version, reproduction steps, expected behavior, and any available sanitized logs. Never ask reporters to upload a memory dump because it may contain secrets or private document contents.
+- Keep pull request descriptions concise: explain what changed and why, provide manual steps to exercise the feature or reproduce the fixed bug, state the expected result, and link the issue.
 - Include before/after screenshots or a short video on every PR with user-visible changes. Upload sanitized captures through GitHub's PR description/comment editor and embed the resulting GitHub-hosted attachment URLs in the PR's Visual evidence section. Write `N/A` with a brief reason only for non-visual changes.
-- Never commit PR evidence, screenshots, recordings, one-off capture scripts, logs, review reports, or PR-specific test plans to the source tree. Keep captures in session-owned scratch or ignored `target/` paths. Maintained README media and executable visual-regression baselines are exceptions, not places to stash review captures.
-- `gh pr create` and `gh pr edit` can embed existing attachment URLs but do not upload local image/video attachments. If no supported authenticated upload route is available, retain the local captures, provide their exact paths and captions, and ask the owner to upload them through the GitHub editor. Explicitly mark visual evidence as pending; do not claim it is attached, substitute local file links, or commit files as a workaround. CI artifacts may supplement review but expire and are not a replacement for inline PR visuals.
+- Never commit PR evidence, screenshots, recordings, one-off capture scripts, logs, review reports, or PR-specific test plans to the source tree. Keep captures in session-owned scratch or ignored `target/` paths. Maintained README media is the exception, not a place to stash review captures.
+- `gh pr create` and `gh pr edit` can embed existing attachment URLs but do not upload local image/video attachments. If no supported authenticated upload route is available, retain the local captures, provide their exact paths and captions, and ask the owner to upload them through the GitHub editor. Explicitly mark visual evidence as pending; do not claim it is attached, substitute local file links, or commit files as a workaround.
 - Keep lasting behavior and test guidance in maintained documentation; put task checklists, test results, and review history in the issue or PR instead.
-- Pull request titles must pass `.github/workflows/pr-title.yml`; do not bypass or weaken the Conventional Commit title check.
+- Pull request titles must pass `.github/workflows/pr-policy.yml`; do not bypass or weaken the Conventional Commit title check.
 
-## Test organization
+## Code organization
 
-- Do not place test implementations inline with production code.
-- Put module unit tests in an adjacent test module, such as `src/app/navigation/tests.rs`, and declare it from the implementation with `#[cfg(test)] mod tests;`.
-- Use the top-level `tests/` directory for integration tests that exercise the crate through its public API.
+- Put rules that need only Foundation in `macos/Sources/StrataCore` and keep
+  AppKit in `macos/Sources/Strata`.
+- Route every filesystem change through `FileMutations` (safety rules) and
+  `FileOperationCenter` (progress, conflicts, undo). Never overwrite a user's
+  item silently; a replaced item goes to the Trash.
+- Compare file URLs through `URL.canonical`; listings return folder URLs with a
+  trailing slash.
+- Keep directory loading, search, and preview reading off the main thread.
 
-### Test value
+## Tests
 
-- Test observable behavior, not implementation echoes. Do not add tests whose
-  only purpose is to repeat constants or setter assignments, match CSS text,
-  count incidental widget children, or enforce cosmetic pixel sizes, spacing,
-  and alignment.
-- Never write layout tests. Do not add assertions for widget geometry, alignment,
-  spacing, dimensions, wrapping, responsive arrangement, or pixel placement,
-  including tests framed as clipping or layout regressions. Verify layout changes
-  manually with screenshots instead.
-- Keep behavioral tests for actions, input routing, lifecycle, filesystem safety,
-  error handling, and live preferences. Do not turn visual adjustments into
-  widget-tree or layout assertions.
-- Before adding a test, identify the existing coverage owner. Extend a matching
-  setup or use table-driven inputs instead of duplicating default/round-trip
-  assertions or adding another E2E smoke launch. Preserve separate cases where
-  initial state, input route, view mode, or lifecycle exercises distinct behavior.
-- Every parameter and loop dimension must affect the exercised behavior or an
-  assertion. Do not add unused axes that merely run identical cases again.
-- Keep one-off screenshot generators outside the test suite. When consolidating
-  tests, preserve meaningful assertions and document the retained coverage owner;
-  fewer functions alone is not an improvement. Similar names, shared fixtures,
-  or expensive execution do not establish redundant coverage. Preserve separate
-  input-routing, lifecycle, filesystem-safety, and live-preference regressions.
+- Put rule tests in `macos/Tests/StrataCoreTests` and app behavior tests in
+  `macos/Tests/StrataTests`.
+- App tests drive offscreen windows with synthesized `NSEvent`s. They must never
+  order a window front, take keyboard focus, show a modal alert, use
+  `NSPasteboard.general`, or move files to the user's Trash. Use a private
+  pasteboard, temporary folders, and an injected stand-in Trash.
+- Test observable behavior, not implementation echoes. Do not add tests that
+  repeat constants or setter assignments, or that assert layout, geometry,
+  spacing, or pixel placement. Verify layout changes with screenshots instead.
+- Keep behavioral tests for actions, keyboard routing, focus, filesystem safety,
+  error handling, and live preferences. Extend an existing suite or table before
+  adding a near-duplicate test.
+- Every parameter in a parameterized test must affect the exercised behavior or
+  an assertion.
 
-## Saved preferences
+## Preferences
 
-- Follow `docs/preferences.md` when adding or changing application-wide settings.
-- Use `ThemeManager::bind_preference` for immediate initialization and live updates, or read the manager at action dispatch. Settings pages must only edit preferences, never initialize browser behavior.
-- Use shared control bindings rather than window-local copies or one-off broadcasts. Preserve documented chooser and window-local exceptions.
-- Extend the exhaustive saved-preferences fixture and behavioral coverage for startup before Settings opens, changes across two windows, and relevant view rebuilds. Serialization-only tests are not sufficient.
+- Add settings to `Preferences` in `macos/Sources/Strata/Preferences.swift`.
+  Every change posts `Preferences.didChange`; open windows must update live
+  from that notification, without reopening.
+- Settings pages only edit preferences; they never drive browser behavior
+  directly.
 
 ## Internationalization
 
-- Every new or changed application-owned, user-facing string must be localized
-  with `rust-i18n` and added or updated in **all eleven supported languages in the
-  same change**: English, French, German, Spanish, Japanese, Brazilian Portuguese,
-  Korean, Vietnamese, Italian, Russian, and Simplified Chinese. This includes
-  labels, buttons, menus, placeholders, tooltips, accessibility
-  names/descriptions, dialogs, help text, errors, notifications, and
-  status/progress messages.
-- Follow `docs/internationalization.md` and update the matching catalogs under
-  `data/locales/`. English fallback is a runtime safeguard, not permission to leave
-  translations missing or copy English into other languages as a placeholder.
-- Translate complete messages with named placeholders and the appropriate plural
-  forms. Preserve placeholder names, markup, paths, commands, and keybindings;
-  do not assemble sentences from English-only fragments or plural suffixes.
-- Keep translation at presentation boundaries. Never translate filesystem paths,
-  filenames, protocol/action identifiers, user-authored content, or labels and
-  values supplied by another application.
-- When changing UI text or catalogs, run the catalog coverage and interpolation
-  regressions with `./scripts/test-headless.py i18n::`, plus affected behavioral
-  tests as required by the validation policy above.
+- Every new or changed user-facing string goes through `tr("…")` (or
+  `trCount` for counts) and must be added to all eleven catalogs in
+  `macos/Resources/locales` in the same change: English, French, German,
+  Spanish, Japanese, Brazilian Portuguese, Korean, Vietnamese, Italian, Russian,
+  and Simplified Chinese. Do not copy English into other languages as a
+  placeholder.
+- Pass `tr` a string literal so the catalog coverage test can see it.
+- Translate complete messages with named `%{placeholders}`; do not assemble
+  sentences from fragments. Preserve placeholder names, paths, commands, and key
+  labels.
+- Never translate filesystem paths, filenames, or user-authored content.
+- Run `swift test --package-path macos --filter LocalizerTests` after changing
+  catalogs.
 
 ## Keyboard shortcuts
 
-- Read key input only through `ui::keys` (`keys::on_press`, `keys::on_release`,
-  `keys::read_event`); `clippy.toml` rejects raw key signals elsewhere.
-- Define every shortcut as a constant in the `ui::keys::bindings` catalog and
-  match it with `press.is(…)` or `press.digit_in(…)`. Never compare raw keyvals or
-  typed text to recognize a command.
-- Never type a key label by hand. F1 rows, hints, tooltips, and menus render
-  catalog bindings with `keys::label`. Follow `docs/keyboard-shortcuts.md`.
+- Define every shortcut in the `Bindings` catalog in
+  `macos/Sources/Strata/KeyBindings.swift` and match it with
+  `binding.matches(event)`. Never compare raw key codes or typed characters to
+  recognize a command.
+- Never type a key label by hand. Menus use `menuKeyEquivalent`; hints, the
+  footer, and the F1 reference use `binding.label`.
+- Plain-letter shortcuts are handled in the browser views, not as menu key
+  equivalents, so they never fire while a text field has focus.
 
 ## UI controls
 
-- Reuse existing control builders, shared bindings, and CSS classes for dropdowns, buttons, toggles, and segmented controls before creating new ones. Match their hover, active, focus, disabled, and theme states; do not style a new control as a generic form field when an existing button style applies.
+- Reuse existing views and builders (`ThemedView`, `ThemedLabel`,
+  `FileTableView`, `ClosureButton`, `ClosureMenuItem`) before creating new ones.
+  Prefer native AppKit controls in Settings and dialogs.
 
 ## Tooltips
 
 - Only icon-only buttons may have tooltips. Do not add them to text buttons,
-  menu items, labels, entries, file rows, status indicators, or other widgets,
+  menu items, labels, fields, file rows, status indicators, or other views,
   even when their text is truncated.
-- For controls that switch between icon-only and labelled modes, enable tooltips
-  only in icon-only mode and clear them when the label is shown.
-- Keep important help, errors, and status information visible; use explicit
-  accessible names/descriptions for assistive technology. Never use tooltip
-  text as internal data for filtering, identification, or application behavior.
+- Give icon-only buttons an accessibility label. Keep important help, errors,
+  and status visible; never use tooltip text as internal data.
 
 ## Comments
 
 - Prefer self-explanatory names and structure. Do not add comments that narrate obvious code or restate a test's setup, actions, or assertions.
 - Use concise comments for non-obvious intent, invariants, safety requirements, external constraints, workarounds, or surprising behavior.
 
-## Icons
+## Icons and theming
 
-- Bundled icons come from two sources, each with its own job:
-  - **Lucide** for interface icons and generic file categories (documents, pictures, archives, keys, folders). Add new interface icons only from Lucide, keep its geometry intact, and store them under `data/icons/scalable/actions/`.
-  - **Catppuccin VSCode Icons** for code, language, and config file types. Store them under `data/icons/catppuccin/`, copied unchanged from upstream's `icons/css-variables/` set, and add their filename and extension associations to the generated `src/ui/browser/entry/catppuccin.rs` by rerunning `scripts/catppuccin_icons.py <upstream checkout>` rather than editing it by hand.
-- Namespace every bundled asset with `strata-` (`strata-ctp-` for Catppuccin) and keep the Lucide ISC and Catppuccin MIT attributions in `THIRD_PARTY_LICENSES.md` current, including the upstream revision.
-- Render theme-colored bundled icons through `assets::primary_icon` / `assets::set_primary_icon`; direct icon-theme loading preserves the SVG's fallback color and will not follow live theme changes.
-- Lucide icons are tinted with the theme accent. Catppuccin icons keep their own palette by default, resolved at render time to Mocha on dark backgrounds and Latte on light ones; the **File icon colors** preference switches them to the accent. Route both behaviors through `assets`; never hardcode a flavor or bypass the preference.
-
-## Theming
-
-- Apply semantic `@strata_*` colors to every visual state of new interface elements, including icons, text, backgrounds, borders, focus rings, selections, hover/active states, menus, and dialogs.
-- Never use static hex/RGB colors for themeable interface elements. Built-in, custom, and Omarchy themes must remain visually consistent and update live.
+- Use SF Symbols for interface icons (`IconProvider.symbol`) and system file
+  icons and Quick Look thumbnails for files (`IconProvider`).
+- Draw every visual state with `Palette` colors from `Appearance.shared`,
+  through `ThemedView`, `ThemedLabel`, or an `Appearance.didChange` observer.
+  Never hardcode colors for themeable views; themes must update live.
+- Observe notifications in views with selector-based `addObserver(self, …)`,
+  which the system removes automatically, or remove block observers in an
+  `isolated deinit`.
