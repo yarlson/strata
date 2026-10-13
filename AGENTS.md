@@ -64,10 +64,13 @@ mise run build        # when the change touches the bundle, resources, or script
 
 ## Running the app
 
-- Never take the owner's keyboard focus. Launch the app for visual checks in the
-  background with `open -g -n target/macos/Strata.app`, and capture only its
-  window by window ID (`screencapture -x -o -l<id>`). A focused file manager can
-  receive the owner's keystrokes, including Trash and delete shortcuts.
+- Never take the owner's keyboard focus, and do not launch `Strata.app` on the
+  owner's desktop without asking; even `open -g` can end up frontmost. A focused
+  file manager can receive the owner's keystrokes, including Trash and delete
+  shortcuts.
+- For visual checks, open a `BrowserWindowController` offscreen in a temporary
+  test (move the window far off screen, call `orderFrontRegardless()`), capture
+  it with `screencapture -x -o -l<windowNumber>`, and delete the test afterward.
 - Prefer offscreen app tests to manual checks for behavior.
 
 ## Issues and pull requests
